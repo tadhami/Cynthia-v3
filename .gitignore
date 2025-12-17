@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+
+# Python caches
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Virtual environments
+myenv/
+venv/
+.env/
+
+# Agent/local persistence
+chroma_db/
+*_data/
+*/*_semantic_db/
+
+# Databases and artifacts
+*.db
+*.sqlite3
+*.sqlite
+
+# Notebooks
+*.ipynb_checkpoints/
+
+# Logs
+*.log
