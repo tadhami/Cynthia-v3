@@ -1,6 +1,6 @@
 from noahs_local_ollama_chat_agent.agent import ollama_chat_agent as BaseAgent
 from noahs_local_ollama_chat_agent.local_sql_db import local_sql_db
-from .patched_semantic_db import PatchedSemanticDB
+from noahs_local_ollama_chat_agent.local_semantic_db import local_semantic_db
 import os
 import json
 import requests
@@ -11,8 +11,8 @@ class PatchedAgent(BaseAgent):
         self.semantic_model_name = semantic_model_name
         super().__init__(model=model, model_encoding=model_encoding, name=name, url=url, context_window_limit=context_window_limit)
     def _initialize_databases(self):
-        """Initialize DBs but use patched semantic DB."""
-        self.semantic_db = PatchedSemanticDB(
+        """Initialize DBs using the base semantic DB (minimal patch)."""
+        self.semantic_db = local_semantic_db(
             persist_directory=f"{self.name}_data/{self.name}_semantic_db",
             collection_name=f"{self.name}_general",
             sentence_transformer_name=getattr(self, "semantic_model_name", None) or "multi-qa-MiniLM-L6-cos-v1",
@@ -26,7 +26,27 @@ class PatchedAgent(BaseAgent):
             doc = file.read()
         if metadata is None:
             metadata = {"doc_name": doc_name}
-        self.semantic_db.insert_in_chunks(doc, metadata=metadata, max_sentences_per_chunk=max_sentences_per_chunk, split_mode=split_mode)
+        if split_mode == "lines":
+            # Pre-split by lines here to avoid patching the DB
+            lines = doc.splitlines()
+            texts, metadatas, text_ids = [], [], []
+            idx = 0
+            for i in range(0, len(lines), max_sentences_per_chunk):
+                chunk = "\n".join(lines[i:i + max_sentences_per_chunk])
+                texts.append(chunk)
+                m = eval(repr(metadata))
+                m["index"] = idx
+                metadatas.append(m)
+                text_ids.append(f"{doc_name}-{idx}")
+                idx += 1
+            self.semantic_db.batch_insert(texts=texts, metadatas=metadatas, text_ids=text_ids)
+        else:
+            # Use sentence-based chunking provided by the base DB
+            self.semantic_db.insert_in_chunks(
+                doc,
+                metadata=metadata,
+                max_sentences_per_chunk=max_sentences_per_chunk,
+            )
 
     def semantically_contextualize(self, message, semantic_top_k=1, semantic_where=None, semantic_contextualize_prompt=None, semantic_debug=False, semantic_context_max=1):
         # Retrieve candidates semantically
