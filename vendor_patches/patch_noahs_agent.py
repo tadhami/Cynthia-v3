@@ -36,22 +36,9 @@ class PatchedAgent(BaseAgent):
         context_text = [d.get("text", "") for d in selected]
         context = " ... ".join(context_text) if context_text else None
 
-        if context:
+        # Include semantic context if applicable
+        if context is not None:
             print("semantically_contextualize: context added")
-            if semantic_debug:
-                print("\nSemantic retrieval debug:")
-                for item in selected:
-                    meta = item.get("metadata") or {}
-                    # Show full chunk text in debug (no truncation)
-                    excerpt = (item.get("text") or "").replace("\n", " ")
-                    doc_name = meta.get("doc_name")
-                    index = meta.get("index")
-                    print(f"- id: {item.get('id')} | distance: {item.get('distance')}")
-                    if doc_name is not None:
-                        print(f"  doc_name: {doc_name}")
-                    if index is not None:
-                        print(f"  index: {index}")
-                    print(f"  excerpt: {excerpt}")
             if semantic_contextualize_prompt is None:
                 self.add_context("This information may be relevant to the conversation ... " + str(context))
             else:
@@ -72,73 +59,3 @@ class PatchedAgent(BaseAgent):
             semantic_debug=semantic_debug,
         )
 
-    def chat(self, message, show=False, stream=True, conversation=True, auto_refresh=True,
-             show_tokens_left=False, refresh_summary_size=500, refresh_summarize_prompt=None,
-             refresh_summary_reference_prompt=None, speech_ready=False):
-        """
-        Override to fix refresh: ensure the current user message is present after refresh.
-        Also avoid counting the message twice when checking the context window.
-        """
-        # Pre-check context window BEFORE appending the user message to avoid double counting
-        if auto_refresh and not self.is_within_context_window(current_message=message):
-            if show:
-                print(f"{self.name}: CONTEXT WINDOW LIMIT ABOUT TO GO OUT OF BOUNDS, REFRESHING CONVERSATION")
-            self.refresh_conversation(summary_size=refresh_summary_size,
-                                      summarize_prompt=refresh_summarize_prompt,
-                                      summary_reference_prompt=refresh_summary_reference_prompt)
-
-        # Now append the user message (so it's always present in the payload)
-        if conversation:
-            self.conversation_history.append({"role": "user", "content": message})
-
-        if show_tokens_left and auto_refresh:
-            print(f"{self.name}: Tokens left until refresh: {self.tokens_left()}")
-
-        payload = {
-            "model": self.model,
-            "messages": self.conversation_history
-        }
-        headers = {"Content-Type": "application/json"}
-        response = requests.post(self.url+"/chat", headers=headers, json=payload, stream=stream)
-
-        if stream:
-            def stream_generator():
-                full_text = ""
-                if show:
-                    print(self.name + ": ", end="", flush=True)
-                for chunk in response.iter_lines(decode_unicode=True):
-                    if chunk:
-                        try:
-                            data = json.loads(chunk)
-                            content = data.get("message", {}).get("content", "")
-                            if content:
-                                if show:
-                                    print(content, end="", flush=True)
-                                full_text += content
-                                yield content
-                        except json.JSONDecodeError:
-                            continue
-                if conversation and full_text:
-                    self.conversation_history.append({"role": "assistant", "content": full_text})
-            return stream_generator()
-        else:
-            full_text = ""
-            if show:
-                print(self.name + ": ", end="")
-            if response.status_code == 200:
-                try:
-                    json_objects = response.text.strip().split("\n")
-                    for obj in json_objects:
-                        data = json.loads(obj)
-                        content = data.get("message", {}).get("content", "")
-                        if content:
-                            if show:
-                                print(content, end="", flush=True)
-                            full_text += content
-                except json.JSONDecodeError:
-                    full_text = f"Error: Invalid JSON response from Ollama API"
-            else:
-                full_text = f"Error: {response.status_code}, {response.text}"
-            if conversation and full_text:
-                self.conversation_history.append({"role": "assistant", "content": full_text})
-            return full_text
