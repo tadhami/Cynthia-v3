@@ -197,11 +197,10 @@ def load_pokemon_locations(path: Path, id_to_name: dict[str, str]):
     return locs
 
 def load_item_locations(path: Path):
+    """Load item names and their locations across preferred games from CSV.
+    Includes all items present in the CSV, not just evolution stones.
+    """
     items = []
-    evo_stone_keywords = [
-        "Fire Stone", "Water Stone", "Thunder Stone", "Leaf Stone", "Moon Stone",
-        "Sun Stone", "Shiny Stone", "Dusk Stone", "Dawn Stone", "Ice Stone",
-    ]
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         if reader.fieldnames is None:
@@ -220,9 +219,6 @@ def load_item_locations(path: Path):
         for row in reader:
             name = (row.get(name_key) or "").strip()
             if not name:
-                continue
-            # Only include evolution-related stones to keep KB concise
-            if not any(k.lower() in name.lower() for k in evo_stone_keywords):
                 continue
             parts = []
             for g in preferred_games:
@@ -268,8 +264,8 @@ def build_kb():
     id_to_name = load_id_to_name(POKEMON_STATS_CSV)
     evolutions = load_evolutions(POKEMON_EVOS_CSV)
     locations = load_pokemon_locations(POKEMON_LOCS_CSV, id_to_name)
-    evo_items = load_item_locations(ITEM_LOCS_CSV)
-    print(f"Loaded {len(pokemons)} Pokémon, {len(moves)} moves, {len(evolutions)} evolutions, {len(locations)} location rows, {len(evo_items)} evolution items.")
+    items = load_item_locations(ITEM_LOCS_CSV)
+    print(f"Loaded {len(pokemons)} Pokémon, {len(moves)} moves, {len(evolutions)} evolutions, {len(locations)} location rows, {len(items)} items.")
 
     # Index list for quick name matching
     names_index = sorted(set(p["name"] for p in pokemons))
@@ -351,13 +347,13 @@ def build_kb():
                 f"Effect: {effect}.\n"
             )
 
-        # Evolution Item Locations (selected stones)
-        out.write("\nEvolution Item Locations (selected stones):\n")
-        if evo_items:
-            for item in sorted(evo_items, key=lambda x: x["name"].lower()):
+        # Item Locations
+        out.write("\nItem Locations:\n")
+        if items:
+            for item in sorted(items, key=lambda x: x["name"].lower()):
                 out.write(f"{item['name']}: {item['summary']}\n")
         else:
-            out.write("(No evolution item locations found)\n")
+            out.write("(No item locations found)\n")
 
     print(f"Wrote {OUTPUT_TXT.relative_to(ROOT)}")
 
