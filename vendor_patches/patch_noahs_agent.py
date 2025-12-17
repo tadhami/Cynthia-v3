@@ -42,7 +42,8 @@ class PatchedAgent(BaseAgent):
                 print("\nSemantic retrieval debug:")
                 for item in selected:
                     meta = item.get("metadata") or {}
-                    excerpt = (item.get("text") or "")[:240].replace("\n", " ")
+                    # Show full chunk text in debug (no truncation)
+                    excerpt = (item.get("text") or "").replace("\n", " ")
                     doc_name = meta.get("doc_name")
                     index = meta.get("index")
                     print(f"- id: {item.get('id')} | distance: {item.get('distance')}")
