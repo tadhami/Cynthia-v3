@@ -1,5 +1,5 @@
 from vendor_patches.patch_noahs_agent import PatchedAgent as ollama_chat_agent
-
+from noahs_tts import TTS
 #  Analyze a document without having to upload entire document into context window
 
 # 1. create agent, ollama api must be running in background and provided model must be installed
