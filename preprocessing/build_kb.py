@@ -165,19 +165,14 @@ def load_evolutions(path: Path):
     return evo
 
 def load_pokemon_locations(path: Path, id_to_name: dict[str, str]):
-    # Focus on modern games for concise summaries
-    preferred_games = [
-        "X", "Y",
-        "Omega Ruby", "Alpha Sapphire",
-        "Sun", "Moon", "Ultra Sun", "Ultra Moon",
-        "Sword", "Shield",
-        "Brilliant Diamond", "Shining Pearl",
-        "Legends: Arceus",
-    ]
+    """Load per-Pokémon locations across ALL game columns present in the CSV."""
     locs: dict[str, str] = {}
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         fields = [fn.strip() for fn in (reader.fieldnames or [])]
+        # Treat all columns except id/name-like fields as game columns
+        exclude = {"pokemon_id", "pokedex_number", "name", "Name", "Variant"}
+        game_cols = [c for c in fields if c not in exclude]
         for row in reader:
             pid = (row.get("pokemon_id") or row.get("pokedex_number") or "").strip()
             if not pid:
@@ -186,20 +181,16 @@ def load_pokemon_locations(path: Path, id_to_name: dict[str, str]):
             if not name:
                 continue
             parts = []
-            for g in preferred_games:
+            for g in game_cols:
                 val = clean_text(row.get(g) or "")
                 if val:
                     parts.append(f"{g}: {val}")
             if parts:
-                # Limit overly long lines
-                summary = "; ".join(parts)
-                locs[name] = summary
+                locs[name] = "; ".join(parts)
     return locs
 
 def load_item_locations(path: Path):
-    """Load item names and their locations across preferred games from CSV.
-    Includes all items present in the CSV, not just evolution stones.
-    """
+    """Load item names and their locations across ALL game columns present in the CSV."""
     items = []
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -208,20 +199,14 @@ def load_item_locations(path: Path):
         fields = [fn.strip() for fn in reader.fieldnames]
         # Identify item name column
         name_key = "item_name" if "item_name" in fields else fields[0]
-        preferred_games = [
-            "X", "Y",
-            "Omega Ruby", "Alpha Sapphire",
-            "Sun", "Moon", "Ultra Sun", "Ultra Moon",
-            "Sword", "Shield",
-            "Brilliant Diamond", "Shining Pearl",
-            "Legends: Arceus",
-        ]
+        exclude = {name_key, "item_id", "id", "ID"}
+        game_cols = [c for c in fields if c not in exclude]
         for row in reader:
             name = (row.get(name_key) or "").strip()
             if not name:
                 continue
             parts = []
-            for g in preferred_games:
+            for g in game_cols:
                 val = clean_text(row.get(g) or "")
                 if val:
                     parts.append(f"{g}: {val}")
