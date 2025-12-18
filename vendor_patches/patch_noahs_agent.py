@@ -59,7 +59,7 @@ class PatchedAgent(BaseAgent):
                     meta = item.get("metadata") or {}
                     doc_name = meta.get("doc_name")
                     index = meta.get("index")
-                    excerpt = (item.get("text") or "")[:240].replace("\n", " ")
+                    excerpt = (item.get("text") or "").replace("\n", " ")
                     print(f"- id: {item.get('id')} | distance: {item.get('distance')}")
                     if doc_name is not None:
                         print(f"  doc_name: {doc_name}")
