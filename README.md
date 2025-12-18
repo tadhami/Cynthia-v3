@@ -1,6 +1,6 @@
 # AMC Assignment
 
-A local LLM chatbot using Ollama and `noahs_local_ollama_chat_agent` with a consolidated Pokémon knowledge base.
+A local LLM Pokémon chatbot using Ollama and `noahs_local_ollama_chat_agent` with a consolidated Pokémon knowledge base.
 
 ## Prerequisites
 - macOS, zsh
@@ -8,9 +8,20 @@ A local LLM chatbot using Ollama and `noahs_local_ollama_chat_agent` with a cons
 - Python 3.11
 
 ## Setup
+- Create and activate a virtual environment
 ```zsh
-# From repo root
-./myenv/bin/python3.11 -m pip install -r requirements.txt  # if you use a requirements file
+# Create a new venv (recommended)
+python3.11 -m venv .venv
+
+# Activate the venv (zsh/macOS)
+source .venv/bin/activate
+
+```
+
+- Install the dependency (with venv activated)
+```zsh
+pip install --upgrade pip
+pip install noahs-local-ollama-chat-agent
 ```
 
 ## Run
@@ -18,8 +29,8 @@ A local LLM chatbot using Ollama and `noahs_local_ollama_chat_agent` with a cons
 # Start Ollama separately
 ollama run llama3.2:3b  # or ensure the model is installed
 
-# Chat demo
-./myenv/bin/python3.11 test.py
+# Chat demo (with activated venv)
+python test.py
 ```
 
 ## Notes
