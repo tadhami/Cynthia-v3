@@ -12,9 +12,23 @@ A local LLM Pokémon chatbot using Ollama,  `noahs_local_ollama_chat_agent`, and
 ```zsh
 # Create a new venv (recommended)
 python3.11 -m venv .venv
-
+# Chat demo (with activated venv)
 # Activate the venv (zsh/macOS)
 source .venv/bin/activate
+
+## Text-to-Speech (optional)
+- Install the TTS dependency (once):
+```zsh
+pip install noahs_tts
+```
+- Run chat with spoken responses:
+```zsh
+python chat.py --tts
+```
+- Without TTS (default streaming output):
+```zsh
+python chat.py
+```
 
 ```
 - Install the dependency (with venv activated)
