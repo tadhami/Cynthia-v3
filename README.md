@@ -24,11 +24,11 @@ pip install noahs_tts
 ```
 Run chat with spoken responses:
 ```zsh
-python chat.py --tts
+python3.11 chat.py --tts
 ```
 Without TTS (default streaming output):
 ```zsh
-python chat.py
+python3.11 chat.py
 ```
 
 
@@ -41,11 +41,11 @@ pip install noahs_tts
 ## Debug (optional)
 Enable semantic retrieval debug output:
 ```zsh
-python chat.py --debug
+python3.11 chat.py --debug
 ```
 Combine with TTS:
 ```zsh
-python chat.py --tts --debug
+python3.11 chat.py --tts --debug
 ```
 
 ## Run
@@ -56,7 +56,7 @@ ollama run llama3.2:3b  # or ensure the model is installed
 ```
 Chat demo (with activated venv)
 ```zsh
-python chat.py
+python3.11 chat.py
 ```
 
 ## Testing
@@ -66,7 +66,7 @@ ollama run llama3.2:3b  # or ensure the model is installed
 ```        
 With venv activated
 ```zsh
-python scripts/agent_test_runner.py
+python3.11 scripts/agent_test_runner.py
 ```
 Output: `reports/agent_test_results.csv` with columns `test_id`, `semantic_query`, `question`, `response`.
 The runner injects semantic context first (semantic query), then asks the question, and captures the full non-streamed response.
