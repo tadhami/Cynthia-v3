@@ -2,7 +2,7 @@ from noahs_local_ollama_chat_agent.agent import ollama_chat_agent as BaseAgent
 from noahs_local_ollama_chat_agent.local_sql_db import local_sql_db
 from noahs_local_ollama_chat_agent.local_semantic_db import local_semantic_db
 import os
-\
+
 
 class PatchedAgent(BaseAgent):
     def __init__(self, model="llama3.2:3b", model_encoding=None, name="Agent", url="http://localhost:11434/api", context_window_limit=2048, semantic_model_name="multi-qa-MiniLM-L6-cos-v1"):
@@ -52,7 +52,6 @@ class PatchedAgent(BaseAgent):
 
         # Include semantic context if applicable
         if context is not None:
-            print("semantically_contextualize: context added")
             if semantic_debug:
                 print("\nSemantic retrieval debug:")
                 for item in selected:
