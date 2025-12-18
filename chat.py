@@ -6,7 +6,7 @@ from noahs_tts import TTS
 agent = ollama_chat_agent(name="Cynthia", model="llama3.2:3b")
 debug = True 
 # 2. (optional) purge semantic database for fresh start
-# agent.semantic_db.purge_collection();
+agent.semantic_db.purge_collection();
 
 # 3. upload consolidated Pokémon knowledge base split by lines so each entry is intact
 agent.upload_document("data/processed/pokemon_kb.txt", max_sentences_per_chunk=1, split_mode="lines")
