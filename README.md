@@ -17,7 +17,6 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 
 ```
-
 - Install the dependency (with venv activated)
 ```zsh
 pip install noahs-local-ollama-chat-agent
@@ -36,8 +35,7 @@ python chat.py
 ## Testing
 Automated test runner generates a CSV report of semantic queries, questions, and Cynthia's responses.
 ```zsh
-# Ensure Ollama is running and model installed
-ollama run llama3.2:3b
+ollama run llama3.2:3b  # or ensure the model is installed
 
 # With venv activated
 python scripts/agent_test_runner.py
