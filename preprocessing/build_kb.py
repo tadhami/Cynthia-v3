@@ -1,4 +1,5 @@
 import csv
+import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,6 +66,43 @@ def load_pokemon_types(path: Path):
                 "type2": type2,
             })
     return pokemons
+
+
+def load_pokemon_meta(path: Path):
+    """Load selected metadata fields per Pokémon keyed by name.
+    Fields: pokedex_number, generation, classification, abilities, height_m, weight_kg, base_total
+    """
+    meta = {}
+    with path.open("r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = (row.get("name") or row.get("Name") or "").strip()
+            if not name:
+                continue
+            # Extract and normalize abilities
+            abilities_raw = (row.get("abilities") or row.get("Abilities") or "").strip()
+            abilities_fmt = ""
+            if abilities_raw:
+                try:
+                    parsed = ast.literal_eval(abilities_raw)
+                    if isinstance(parsed, (list, tuple)):
+                        abilities_fmt = ", ".join(str(x) for x in parsed)
+                    else:
+                        abilities_fmt = str(parsed)
+                except Exception:
+                    # Fallback: strip brackets/quotes common in CSVs
+                    abilities_fmt = abilities_raw.strip("[]").replace("'", "").replace('"', "")
+
+            meta[name] = {
+                "pokedex_number": (row.get("pokedex_number") or "").strip(),
+                "generation": (row.get("generation") or "").strip(),
+                "classification": (row.get("classification") or "").strip(),
+                "abilities": abilities_fmt,
+                "height_m": (row.get("height_m") or "").strip(),
+                "weight_kg": (row.get("weight_kg") or "").strip(),
+                "base_total": (row.get("base_total") or row.get("base_total")) or "",
+            }
+    return meta
 
 
 def load_stats_lookup(path: Path):
@@ -241,6 +279,7 @@ def build_kb():
     PROCESSED.mkdir(parents=True, exist_ok=True)
     defender_types, chart = load_type_chart(TYPES_CHART_CSV)
     pokemons = load_pokemon_types(POKEMON_TYPES_CSV)
+    meta_lookup = load_pokemon_meta(POKEMON_TYPES_CSV)
     stats_lookup = load_stats_lookup(POKEMON_STATS_CSV)
     moves = load_moves(POKEMON_MOVES_CSV)
     id_to_name = load_id_to_name(POKEMON_STATS_CSV)
@@ -289,6 +328,18 @@ def build_kb():
             resist_text = ", ".join(resistances) if resistances else "None"
             immune_text = ", ".join(immunities) if immunities else "None"
 
+            # Selected metadata fields
+            meta = meta_lookup.get(name, {})
+            dex = meta.get("pokedex_number") or "?"
+            gen = meta.get("generation") or "?"
+            classification = meta.get("classification") or "Unknown"
+            abilities = meta.get("abilities") or "Unknown"
+            height_m = meta.get("height_m") or "?"
+            weight_kg = meta.get("weight_kg") or "?"
+            base_total = str(meta.get("base_total") or "?")
+
+            out.write(f"{name} — Dex# {dex}, Gen {gen}, Classification: {classification}. ")
+            out.write(f"Abilities: {abilities}. Height: {height_m} m, Weight: {weight_kg} kg. Base total: {base_total}. ")
             out.write(f"{name} is a {type_label}-type Pokémon. ")
             out.write(f"Weak to: {weak_text}. ")
             out.write(f"Resists: {resist_text}. ")
