@@ -8,53 +8,53 @@ A local LLM Pokémon chatbot using Ollama,  `noahs_local_ollama_chat_agent`, and
 - Python 3.11
 
 ## Setup
-# Create and activate a virtual environment
+Create and activate a virtual environment
 ```zsh
 python3.11 -m venv .venv
 ```
-# Activate the venv (zsh/macOS)
+Activate the venv (zsh/macOS)
 ```zsh
 source .venv/bin/activate
 ```
 
 ## Text-to-Speech (optional)
-# Install the TTS dependency:
+Install the TTS dependency:
 ```zsh
 pip install noahs_tts
 ```
-# Run chat with spoken responses:
+Run chat with spoken responses:
 ```zsh
 python chat.py --tts
 ```
-# Without TTS (default streaming output):
+Without TTS (default streaming output):
 ```zsh
 python chat.py
 ```
 
 
-# Install the dependency (with venv activated)
+Install the dependency (with venv activated)
 ```zsh
 pip install noahs-local-ollama-chat-agent
 pip install noahs_tts
 ```
 
 ## Debug (optional)
-# Enable semantic retrieval debug output:
+Enable semantic retrieval debug output:
 ```zsh
 python chat.py --debug
 ```
-# Combine with TTS:
+Combine with TTS:
 ```zsh
 python chat.py --tts --debug
 ```
 
 ## Run
 
-# Start Ollama separately
+Start Ollama separately
 ```zsh
 ollama run llama3.2:3b  # or ensure the model is installed
 ```
-# Chat demo (with activated venv)
+Chat demo (with activated venv)
 ```zsh
 python chat.py
 ```
@@ -64,7 +64,7 @@ Automated test runner generates a CSV report of semantic queries, questions, and
 ```zsh
 ollama run llama3.2:3b  # or ensure the model is installed
 ```        
-# With venv activated
+With venv activated
 ```zsh
 python scripts/agent_test_runner.py
 ```
