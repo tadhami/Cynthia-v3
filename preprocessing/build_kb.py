@@ -96,10 +96,9 @@ def load_id_to_name(path: Path):
             variant = (row.get("Variant") or "").strip()
             if not pid or not name:
                 continue
-            # Prefer non-variant base names; do not overwrite an existing base with a variant
             if pid not in id_to_name:
                 id_to_name[pid] = name
-            elif not variant and id_to_name.get(pid, ""):  # keep existing base
+            elif not variant and id_to_name.get(pid, ""): 
                 id_to_name[pid] = name
     return id_to_name
 
@@ -109,9 +108,7 @@ def load_moves(path: Path):
         reader = csv.DictReader(f)
         if reader.fieldnames is None:
             return moves
-        # Resolve potential BOM or unexpected header names
         fieldnames = [fn.strip() for fn in reader.fieldnames]
-        # Map canonical keys
         def key(*candidates):
             for c in candidates:
                 if c in fieldnames:
