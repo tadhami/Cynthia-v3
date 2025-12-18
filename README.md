@@ -33,6 +33,18 @@ ollama run llama3.2:3b  # or ensure the model is installed
 python chat.py
 ```
 
+## Testing
+Automated test runner generates a CSV report of semantic queries, questions, and Cynthia's responses.
+```zsh
+# Ensure Ollama is running and model installed
+ollama run llama3.2:3b
+
+# With venv activated
+python scripts/agent_test_runner.py
+```
+Output: `reports/agent_test_results.csv` with columns `test_id`, `semantic_query`, `question`, `response`.
+The runner injects semantic context first (semantic query), then asks the question, and captures the full non-streamed response.
+
 ## Notes
 - Semantic debug is enabled in `chat.py` to show which chunks are retrieved.
 - `.gitignore` excludes the local venv (`myenv/`) and DB/cache artifacts.

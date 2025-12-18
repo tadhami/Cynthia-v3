@@ -1,0 +1,3 @@
+test_id,semantic_query,question,response
+1,Abra locations in Red/Blue,Where is Abra in Red and Blue?,"In the Red and Blue games, you can find Abra at Routes 24 and 25. That's where this Psychic-type Pokémon likes to hang out!"
+2,Thunderbolt move details,"Give Thunderbolt's power, accuracy, PP, and effect.",For Thunderbolt:  - Power: 90 - Accuracy: 100 - PP (Power Points): 15 - Effect: May paralyze opponent
