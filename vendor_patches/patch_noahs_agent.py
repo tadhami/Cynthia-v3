@@ -53,6 +53,19 @@ class PatchedAgent(BaseAgent):
         # Include semantic context if applicable
         if context is not None:
             print("semantically_contextualize: context added")
+            if semantic_debug:
+                print("\nSemantic retrieval debug:")
+                for item in selected:
+                    meta = item.get("metadata") or {}
+                    doc_name = meta.get("doc_name")
+                    index = meta.get("index")
+                    excerpt = (item.get("text") or "")[:240].replace("\n", " ")
+                    print(f"- id: {item.get('id')} | distance: {item.get('distance')}")
+                    if doc_name is not None:
+                        print(f"  doc_name: {doc_name}")
+                    if index is not None:
+                        print(f"  index: {index}")
+                    print(f"  excerpt: {excerpt}")
             if semantic_contextualize_prompt is None:
                 self.add_context("This information may be relevant to the conversation ... " + str(context))
             else:
