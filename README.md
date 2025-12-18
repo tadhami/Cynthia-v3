@@ -1,4 +1,4 @@
-# AMC Assignment
+# Assignment: Build a Creative Local LLM Agent Using Python 3.11
 
 A local LLM Pokémon chatbot using Ollama,  `noahs_local_ollama_chat_agent`, and `noahs_tts` with a consolidated Pokémon knowledge base.
 
