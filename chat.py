@@ -15,15 +15,23 @@ agent.semantic_db.purge_collection();
 agent.upload_document("data/processed/pokemon_kb.txt", max_sentences_per_chunk=1, split_mode="lines")
 
 print("\n")
+
+# 4. do a semantic search for 5 relevant passages to a semantic_query and add it to the context window of the agent
+semantic_query = input("Enter a semantic search query: ")
+agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=5, semantic_debug=debug)
+
+# 5. start the chat with a question about the uploaded content.
+message = input("Enter your question about the uploaded document: ")
+response_stream = agent.chat(message)
+print("\n")
+print(f"You: {message}")
+agent.print_stream(response_stream)
+
+print("\n")
 print("Continue to chat...")
 print("\n")
 
-message = ""
 while message not in ["bye","goodbye","exit","quit"]:
-	semantic_query = input("Enter a semantic search query: ")
-	agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=10, semantic_debug=debug)
-	message = input("Enter your question about the uploaded document: ")
-	agent.discuss_document(message, doc_name="pokemon_kb.txt", semantic_top_k=10, semantic_debug=debug)
-	# Simple streaming: print chunks directly
-	response_stream = agent.chat(message, show=False)
+	message = input("You: ")
+	response_stream = agent.chat(message)
 	agent.print_stream(response_stream)
