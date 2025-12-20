@@ -28,8 +28,32 @@ while message not in ["bye","goodbye","exit","quit"]:
 	message = input("Enter your question about the uploaded document: ")
 	agent.discuss_document(message, doc_name="pokemon_kb.txt", semantic_top_k=10, semantic_debug=debug)
 	if tts is not None:
-		response_text = agent.chat(message, show=False, stream=False)
-		print("Cynthia: " + response_text)
+		try:
+			response_text = agent.chat(message, show=False, stream=False)
+		except Exception as e:
+			print(f"[diag] non-stream chat raised: {type(e).__name__}: {e}")
+			response_text = ""
+		if not response_text or not str(response_text).strip():
+			print(f"[diag] non-stream empty; switching to streaming. msg_len={len(message)}, msg_excerpt='{message[:120]}'")
+			# Fallback to streaming if non-streaming returns empty; capture chunks manually
+			response_stream = agent.chat(message, show=False)
+			chunks = []
+			try:
+				for chunk in response_stream:
+					if isinstance(chunk, dict):
+						for k in ("response", "message", "text", "content"):
+							val = chunk.get(k)
+							if val:
+								chunks.append(str(val))
+								break
+						else:
+							chunks.append(str(chunk))
+					else:
+						chunks.append(str(chunk))
+			except Exception:
+				pass
+			response_text = "".join(chunks)
+		print("Cynthia: " + (response_text or "[no response]"))
 		try:
 			tts.say(response_text)
 		except Exception:
