@@ -34,25 +34,10 @@ while message not in ["bye","goodbye","exit","quit"]:
 			print(f"[diag] non-stream chat raised: {type(e).__name__}: {e}")
 			response_text = ""
 		if not response_text or not str(response_text).strip():
-			print(f"[diag] non-stream empty; switching to streaming. msg_len={len(message)}, msg_excerpt='{message[:120]}'")
-			# Fallback to streaming if non-streaming returns empty; capture chunks manually
+			# Simple fallback: stream and print directly
 			response_stream = agent.chat(message, show=False)
-			chunks = []
-			try:
-				for chunk in response_stream:
-					if isinstance(chunk, dict):
-						for k in ("response", "message", "text", "content"):
-							val = chunk.get(k)
-							if val:
-								chunks.append(str(val))
-								break
-						else:
-							chunks.append(str(chunk))
-					else:
-						chunks.append(str(chunk))
-			except Exception:
-				pass
-			response_text = "".join(chunks)
+			agent.print_stream(response_stream)
+			response_text = ""
 		print("Cynthia: " + (response_text or "[no response]"))
 		try:
 			tts.say(response_text)
