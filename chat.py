@@ -1,15 +1,12 @@
 from vendor_patches.patch_noahs_agent import PatchedAgent as ollama_chat_agent
-from noahs_tts import TTS
 import argparse
 
 # 1. create agent, ollama api must be running in background and provided model must be installed
-parser = argparse.ArgumentParser(description="Cynthia chat with optional TTS and debug")
-parser.add_argument("--tts", action="store_true", help="Speak responses using text-to-speech")
+parser = argparse.ArgumentParser(description="Cynthia chat with debug")
 parser.add_argument("--debug", action="store_true", help="Enable semantic retrieval debug output")
 args = parser.parse_args()
 
 agent = ollama_chat_agent(name="Cynthia", model="llama3.2:3b")
-tts = TTS(voice="Samantha") if args.tts else None
 debug = bool(args.debug)
 # 2. (optional) purge semantic database for fresh start
 agent.semantic_db.purge_collection();
@@ -27,22 +24,6 @@ while message not in ["bye","goodbye","exit","quit"]:
 	agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=10, semantic_debug=debug)
 	message = input("Enter your question about the uploaded document: ")
 	agent.discuss_document(message, doc_name="pokemon_kb.txt", semantic_top_k=10, semantic_debug=debug)
-	if tts is not None:
-		try:
-			response_text = agent.chat(message, show=False, stream=False)
-		except Exception as e:
-			print(f"[diag] non-stream chat raised: {type(e).__name__}: {e}")
-			response_text = ""
-		if not response_text or not str(response_text).strip():
-			# Simple fallback: stream and print directly
-			response_stream = agent.chat(message, show=False)
-			agent.print_stream(response_stream)
-			response_text = ""
-		print("Cynthia: " + (response_text or "[no response]"))
-		try:
-			tts.say(response_text)
-		except Exception:
-			pass
-	else:
-		response_stream = agent.chat(message, show=False)
-		agent.print_stream(response_stream)
+	# Simple streaming: print chunks directly
+	response_stream = agent.chat(message, show=False)
+	agent.print_stream(response_stream)
