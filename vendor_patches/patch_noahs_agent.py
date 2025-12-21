@@ -43,28 +43,18 @@ class PatchedAgent(BaseAgent):
 
 
     def semantically_contextualize(self, message, semantic_top_k=1, semantic_where=None, semantic_contextualize_prompt=None, semantic_debug=False, semantic_context_max=1):
-        # Retrieve candidates semantically
-        context_results = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
-        # Limit injected context to top-N (default 1) to avoid blending across similar entries
-        selected = context_results[:max(1, int(semantic_context_max))]
-        context_text = [d.get("text", "") for d in selected]
-        context = " ... ".join(context_text) if context_text else None
+        
+        context = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
+        context_text = []
+        for d in context:
+            context_text.append(d["text"])
+        context = " ... ".join(context_text)
 
         # Include semantic context if applicable
         if context is not None:
             if semantic_debug:
-                print("\nSemantic retrieval debug:")
-                for item in selected:
-                    meta = item.get("metadata") or {}
-                    doc_name = meta.get("doc_name")
-                    index = meta.get("index")
-                    excerpt = (item.get("text") or "").replace("\n", " ")
-                    print(f"- id: {item.get('id')} | distance: {item.get('distance')}")
-                    if doc_name is not None:
-                        print(f"  doc_name: {doc_name}")
-                    if index is not None:
-                        print(f"  index: {index}")
-                    print(f"  excerpt: {excerpt}")
+                print("\nSemantic retrieval debug:", context)
+                
             if semantic_contextualize_prompt is None:
                 self.add_context("This information may be relevant to the conversation ... " + str(context))
             else:
