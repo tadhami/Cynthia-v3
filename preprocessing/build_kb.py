@@ -1,21 +1,17 @@
 """
-Builds a consolidated, human-readable Pokémon knowledge base text file from CSV sources.
+Builds a consolidated Pokémon knowledge base from CSV sources.
 
 What this script does at a high level:
 - Resolves paths under the project `data/` folder
 - Loads multiple CSVs (types chart, Pokémon types and stats, moves, evolutions, locations, items)
 - Computes type effectiveness and assembles per-Pokémon summaries
-- Writes sections to `data/processed/pokemon_kb.txt` with consistent header format:
-    - "Type — <TypeName> — ..."
-    - "Pokemon — <Name> — ..."
-    - "Move — <Name> — ..."
-    - "Item — <Name> — ..."
+- Writes JSON Lines to `data/processed/pokemon_kb.txt` (one JSON object per line)
 
 Tip: Read the `build_kb()` function first for the write flow. Helper loaders above it each return
 plain Python structures (lists or dicts) with predictable keys used during assembly.
 """
-
 import csv  # CSV parsing for all data files
+import json # JSON lines output formatting
 import ast   # Safe parsing of stringified lists (e.g., abilities)
 from pathlib import Path  # Cross-platform filesystem paths
 
@@ -32,7 +28,7 @@ POKEMON_EVOS_CSV = DATA / "evolution_criteria.csv"         # evolution descripti
 POKEMON_LOCS_CSV = DATA / "Pokemon_locations.csv"          # per-game Pokémon locations
 ITEM_LOCS_CSV = DATA / "item_locations.csv"                # per-game item locations
 
-# Output KB file
+# Output KB file (JSON Lines in a .txt: one JSON object per line)
 OUTPUT_TXT = PROCESSED / "pokemon_kb.txt"
 
 # Map numeric codes in types_chart.csv to multipliers
@@ -323,7 +319,7 @@ def combine_effects(type1: str, type2: str | None, attacker_types: list[str], ch
 
 
 def build_kb():
-    """Main assembly function: loads all sources and writes the KB text file."""
+    """Main assembly: writes KB as JSON Lines (one JSON object per line)."""
     PROCESSED.mkdir(parents=True, exist_ok=True)
     defender_types, chart = load_type_chart(TYPES_CHART_CSV)
     pokemons = load_pokemon_types(POKEMON_TYPES_CSV)
@@ -336,45 +332,27 @@ def build_kb():
     items = load_item_locations(ITEM_LOCS_CSV)
     print(f"Loaded {len(pokemons)} Pokémon, {len(moves)} moves, {len(evolutions)} evolutions, {len(locations)} location rows, {len(items)} items.")
 
-    # Index list for quick name matching
-    names_index = sorted(set(p["name"] for p in pokemons))
-
     with OUTPUT_TXT.open("w", encoding="utf-8") as out:
-        out.write("Pokémon Knowledge Base.\n")
-        out.write("Index: " + ", ".join(names_index[:200]) + ("..." if len(names_index) > 200 else "") + "\n\n")
-
-        # Type Chart Summary
-        out.write("Type Chart Summary:\n")
+        # Types as JSON objects
         for atk in chart.keys():
             weak = [d for d, mult in chart[atk].items() if mult == 2.0]
             resist = [d for d, mult in chart[atk].items() if mult == 0.5]
             immune = [d for d, mult in chart[atk].items() if mult == 0.0]
-            out.write(f"Type — {atk} — Super effective against {', '.join(weak) or 'None'}. ")
-            out.write(f"Not very effective against {', '.join(resist) or 'None'}. ")
-            out.write(f"No effect on {', '.join(immune) or 'None'}.\n")
-        out.write("\n")
+            obj = {
+                "id": atk,
+                "category": "Type",
+                "super_effective": weak,
+                "not_very_effective": resist,
+                "no_effect": immune,
+            }
+            out.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
-        # Per-Pokémon entries
+        # Per-Pokémon entries as JSON objects
         for p in sorted(pokemons, key=lambda x: x["name"].lower()):
             name = p["name"]
             t1 = p["type1"] or "Unknown"
             t2 = p["type2"]
             weaknesses, resistances, immunities = combine_effects(t1, t2, defender_types, chart)
-
-            # Stats summary if available
-            stats = stats_lookup.get(name)
-            if stats:
-                stats_text = (
-                    f"Stats: HP {stats['HP']}/Atk {stats['Attack']}/Def {stats['Defense']}/"
-                    f"SpA {stats['Sp.Atk']}/SpD {stats['Sp.Def']}/Spe {stats['Speed']}."
-                )
-            else:
-                stats_text = "Stats: Unknown."
-
-            type_label = f"{t1}/{t2}" if t2 else t1
-            weak_text = ", ".join(weaknesses) if weaknesses else "None"
-            resist_text = ", ".join(resistances) if resistances else "None"
-            immune_text = ", ".join(immunities) if immunities else "None"
 
             # Selected metadata fields
             meta = meta_lookup.get(name, {})
@@ -386,35 +364,32 @@ def build_kb():
             weight_kg = meta.get("weight_kg") or "?"
             base_total = str(meta.get("base_total") or "?")
 
-            out.write(f"Pokemon — {name} — Dex# {dex}, Gen {gen}, Classification: {classification}. ")
-            out.write(f"Abilities: {abilities}. Height: {height_m} m, Weight: {weight_kg} kg. Base total: {base_total}. ")
-            out.write(f"{name} is a {type_label}-type Pokémon. ")
-            out.write(f"Weak to: {weak_text}. ")
-            out.write(f"Resists: {resist_text}. ")
-            out.write(f"Immune to: {immune_text}. ")
-            # Evolution summary
-            evo_text = evolutions.get(name)
-            if evo_text:
-                out.write(f"Evolution: {evo_text} ")
-            # Locations summary (modern games)
-            loc_text = locations.get(name)
-            if loc_text:
-                out.write(f"Locations: {loc_text}. ")
-            out.write(stats_text + "\n")
+            # Stats dictionary (may contain empty strings depending on source CSV)
+            stats = stats_lookup.get(name)
 
-        out.write("\n")
-        out.write("Moves Index:\n")
-        if moves:
-            out.write(
-                ", ".join(sorted(set(m["Name"] for m in moves))[:200])
-                + ("..." if len(moves) > 200 else "")
-                + "\n\n"
-            )
-        else:
-            out.write("(No moves found)\n\n")
+            obj = {
+                "id": name,
+                "category": "Pokemon",
+                "types": [t1] if not t2 else [t1, t2],
+                "weak_to": weaknesses,
+                "resists": resistances,
+                "immune_to": immunities,
+                "stats": stats or {},
+                "evolution": evolutions.get(name) or "",
+                "locations": locations.get(name) or "",
+                "metadata": {
+                    "pokedex_number": dex,
+                    "generation": gen,
+                    "classification": classification,
+                    "abilities": abilities,
+                    "height_m": height_m,
+                    "weight_kg": weight_kg,
+                    "base_total": base_total,
+                },
+            }
+            out.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
-        # Per-Move entries
-        out.write("Move Summaries:\n")
+        # Per-Move entries as JSON objects
         for m in sorted(moves, key=lambda x: x["Name"].lower()):
             name = m["Name"]
             type_ = m["Type"]
@@ -423,18 +398,26 @@ def build_kb():
             acc = m["Accuracy"]
             pp = m["PP"]
             effect = m["Effect"] if m["Effect"] else "—"
-            out.write(
-                f"Move — {name} — Type={type_}; Category={cat}; Power={power}; Accuracy={acc}; PP={pp}. "
-                f"Effect: {effect}.\n"
-            )
+            obj = {
+                "id": name,
+                "category": "Move",
+                "type": type_,
+                "move_category": cat,
+                "power": power,
+                "accuracy": acc,
+                "pp": pp,
+                "effect": effect,
+            }
+            out.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
-        # Item Locations
-        out.write("\nItem Locations:\n")
-        if items:
-            for item in sorted(items, key=lambda x: x["name"].lower()):
-                out.write(f"Item — {item['name']} — {item['summary']}\n")
-        else:
-            out.write("(No item locations found)\n")
+        # Item entries as JSON objects
+        for item in sorted(items, key=lambda x: x["name"].lower()):
+            obj = {
+                "id": item["name"],
+                "category": "Item",
+                "locations": item["summary"],
+            }
+            out.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
     print(f"Wrote {OUTPUT_TXT.relative_to(ROOT)}")
 

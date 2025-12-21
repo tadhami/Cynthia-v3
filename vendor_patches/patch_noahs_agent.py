@@ -54,6 +54,7 @@ class PatchedAgent(BaseAgent):
     def semantically_contextualize(self, message, semantic_top_k=1, semantic_where=None, semantic_contextualize_prompt=None, semantic_debug=False, semantic_context_max=1):
         # Minimal contextualization: join top-k texts and add a single system prompt
         context = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
+        print("Context is: ", context)
         context_text = []
         for d in context:
             context_text.append(d["text"])
