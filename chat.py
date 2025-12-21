@@ -25,28 +25,7 @@ message = input("Enter your question about the uploaded document: ")
 response_stream = agent.chat(message)
 print("\n")
 print(f"You: {message}")
-try:
-	first_chunk = next(response_stream)
-except StopIteration:
-	first_chunk = None
-
-# If the first attempt yielded no chunks, retry once
-if first_chunk is None:
-	response_stream = agent.chat(message)
-	try:
-		first_chunk = next(response_stream)
-	except StopIteration:
-		first_chunk = None
-
-if first_chunk is not None:
-	def _prepend_stream(head, tail):
-		yield head
-		for c in tail:
-			yield c
-	agent.print_stream(_prepend_stream(first_chunk, response_stream))
-else:
-	# Still empty; print a newline to keep UX tidy
-	print("")
+agent.print_stream(response_stream)
 
 print("\n")
 print("Continue to chat...")
