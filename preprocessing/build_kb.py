@@ -384,7 +384,7 @@ def build_kb():
         out.write("\nItem Locations:\n")
         if items:
             for item in sorted(items, key=lambda x: x["name"].lower()):
-                out.write(f"{item['name']} — {item['summary']}\n")
+                out.write(f"{item['name']}: {item['summary']}\n")
         else:
             out.write("(No item locations found)\n")
 
