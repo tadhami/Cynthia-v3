@@ -1,22 +1,43 @@
-import csv
-import ast
-from pathlib import Path
+"""
+Builds a consolidated, human-readable Pokémon knowledge base text file from CSV sources.
 
-ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "data"
-PROCESSED = DATA / "processed"
+What this script does at a high level:
+- Resolves paths under the project `data/` folder
+- Loads multiple CSVs (types chart, Pokémon types and stats, moves, evolutions, locations, items)
+- Computes type effectiveness and assembles per-Pokémon summaries
+- Writes sections to `data/processed/pokemon_kb.txt` with consistent header format:
+    - "Type — <TypeName> — ..."
+    - "Pokemon — <Name> — ..."
+    - "Move — <Name> — ..."
+    - "Item — <Name> — ..."
 
-TYPES_CHART_CSV = DATA / "types_chart.csv"
-POKEMON_TYPES_CSV = DATA / "Pokemon_data_types.csv"
-POKEMON_STATS_CSV = DATA / "Pokemon_data.csv"
-POKEMON_MOVES_CSV = DATA / "pokemon_moves.csv"
-POKEMON_EVOS_CSV = DATA / "evolution_criteria.csv"
-POKEMON_LOCS_CSV = DATA / "Pokemon_locations.csv"
-ITEM_LOCS_CSV = DATA / "item_locations.csv"
+Tip: Read the `build_kb()` function first for the write flow. Helper loaders above it each return
+plain Python structures (lists or dicts) with predictable keys used during assembly.
+"""
+
+import csv  # CSV parsing for all data files
+import ast   # Safe parsing of stringified lists (e.g., abilities)
+from pathlib import Path  # Cross-platform filesystem paths
+
+ROOT = Path(__file__).resolve().parents[1]  # repository root
+DATA = ROOT / "data"                         # raw/curated CSVs live here
+PROCESSED = DATA / "processed"               # final KB text output folder
+
+# Input CSVs by role
+TYPES_CHART_CSV = DATA / "types_chart.csv"                 # attacker vs defender multipliers
+POKEMON_TYPES_CSV = DATA / "Pokemon_data_types.csv"        # names + typing (primary/secondary)
+POKEMON_STATS_CSV = DATA / "Pokemon_data.csv"              # base stats and misc metadata
+POKEMON_MOVES_CSV = DATA / "pokemon_moves.csv"             # move names + attributes
+POKEMON_EVOS_CSV = DATA / "evolution_criteria.csv"         # evolution descriptions
+POKEMON_LOCS_CSV = DATA / "Pokemon_locations.csv"          # per-game Pokémon locations
+ITEM_LOCS_CSV = DATA / "item_locations.csv"                # per-game item locations
+
+# Output KB file
 OUTPUT_TXT = PROCESSED / "pokemon_kb.txt"
 
 # Map numeric codes in types_chart.csv to multipliers
 # -5 -> 0x (immune), -1 -> 0.5x (resist), 0 -> 1x (neutral), 1 -> 2x (weak)
+# Mapping of type chart codes to numeric multipliers used in effectiveness math
 CODE_TO_MULT = {
     -5: 0.0,
     -1: 0.5,
@@ -26,6 +47,11 @@ CODE_TO_MULT = {
 
 
 def load_type_chart(path: Path):
+    """Read the type chart and return (defender_types, chart).
+
+    defender_types: list[str] of column names representing defender types
+    chart: dict[str, dict[str, float]] mapping attacker -> defender -> multiplier
+    """
     with path.open("r", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = next(reader)
@@ -49,6 +75,10 @@ def load_type_chart(path: Path):
 
 
 def load_pokemon_types(path: Path):
+    """Load Pokémon names with primary/secondary types.
+
+    Returns: list of dicts {name, type1, type2 or None}
+    """
     pokemons = []
     with path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -69,8 +99,10 @@ def load_pokemon_types(path: Path):
 
 
 def load_pokemon_meta(path: Path):
-    """Load selected metadata fields per Pokémon keyed by name.
-    Fields: pokedex_number, generation, classification, abilities, height_m, weight_kg, base_total
+    """Load auxiliary metadata per Pokémon keyed by name.
+
+    Includes: pokedex_number, generation, classification, abilities,
+    height_m, weight_kg, base_total
     """
     meta = {}
     with path.open("r", encoding="utf-8") as f:
@@ -106,6 +138,7 @@ def load_pokemon_meta(path: Path):
 
 
 def load_stats_lookup(path: Path):
+    """Build a name -> base stats lookup dict."""
     lookup = {}
     with path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -125,6 +158,7 @@ def load_stats_lookup(path: Path):
     return lookup
 
 def load_id_to_name(path: Path):
+    """Resolve Pokédex IDs to canonical names (handles variants)."""
     id_to_name = {}
     with path.open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -141,6 +175,7 @@ def load_id_to_name(path: Path):
     return id_to_name
 
 def load_moves(path: Path):
+    """Load move entries with type/category/power/accuracy/PP/effect."""
     moves = []
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -177,6 +212,7 @@ def load_moves(path: Path):
     return moves
 
 def clean_text(s: str) -> str:
+    """Normalize whitespace and remove placeholder artifacts."""
     if not s:
         return ""
     # Remove placeholder artifacts and tidy whitespace
@@ -186,6 +222,7 @@ def clean_text(s: str) -> str:
     return s.strip()
 
 def load_evolutions(path: Path):
+    """Load evolution criteria per Pokémon name."""
     evo = {}
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -200,7 +237,11 @@ def load_evolutions(path: Path):
     return evo
 
 def load_pokemon_locations(path: Path, id_to_name: dict[str, str]):
-    """Load per-Pokémon locations across ALL game columns present in the CSV."""
+    """Build name -> semicolon-joined per-game locations string.
+
+    All columns except identifiers are treated as game labels; any non-empty value
+    becomes "GameName: value" and is joined with semicolons.
+    """
     locs: dict[str, str] = {}
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -225,7 +266,7 @@ def load_pokemon_locations(path: Path, id_to_name: dict[str, str]):
     return locs
 
 def load_item_locations(path: Path):
-    """Load item names and their locations across ALL game columns present in the CSV."""
+    """Return list of {name, summary} where summary aggregates per-game item locations."""
     items = []
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -251,7 +292,13 @@ def load_item_locations(path: Path):
 
 
 def combine_effects(type1: str, type2: str | None, attacker_types: list[str], chart: dict):
-    # For each attacking type, compute multiplier product across defending types
+    """Compute weaknesses/resistances/immunities vs all attacking types.
+
+    Multiplier product across the defending types decides bucket:
+    - 0.0 -> immune
+    - >1.0 -> weak (mark 4x explicitly)
+    - 0<mult<1 -> resist (mark 0.25x explicitly)
+    """
     weaknesses = []
     resistances = []
     immunities = []
@@ -276,6 +323,7 @@ def combine_effects(type1: str, type2: str | None, attacker_types: list[str], ch
 
 
 def build_kb():
+    """Main assembly function: loads all sources and writes the KB text file."""
     PROCESSED.mkdir(parents=True, exist_ok=True)
     defender_types, chart = load_type_chart(TYPES_CHART_CSV)
     pokemons = load_pokemon_types(POKEMON_TYPES_CSV)
@@ -392,4 +440,5 @@ def build_kb():
 
 
 if __name__ == "__main__":
+    # Entry point: run the builder and write the KB file
     build_kb()
