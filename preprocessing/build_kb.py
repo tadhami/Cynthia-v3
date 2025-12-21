@@ -301,7 +301,7 @@ def build_kb():
             weak = [d for d, mult in chart[atk].items() if mult == 2.0]
             resist = [d for d, mult in chart[atk].items() if mult == 0.5]
             immune = [d for d, mult in chart[atk].items() if mult == 0.0]
-            out.write(f"{atk}: Super effective against {', '.join(weak) or 'None'}. ")
+            out.write(f"Type — {atk} — Super effective against {', '.join(weak) or 'None'}. ")
             out.write(f"Not very effective against {', '.join(resist) or 'None'}. ")
             out.write(f"No effect on {', '.join(immune) or 'None'}.\n")
         out.write("\n")
@@ -338,7 +338,7 @@ def build_kb():
             weight_kg = meta.get("weight_kg") or "?"
             base_total = str(meta.get("base_total") or "?")
 
-            out.write(f"{name} — Dex# {dex}, Gen {gen}, Classification: {classification}. ")
+            out.write(f"Pokemon — {name} — Dex# {dex}, Gen {gen}, Classification: {classification}. ")
             out.write(f"Abilities: {abilities}. Height: {height_m} m, Weight: {weight_kg} kg. Base total: {base_total}. ")
             out.write(f"{name} is a {type_label}-type Pokémon. ")
             out.write(f"Weak to: {weak_text}. ")
@@ -376,7 +376,7 @@ def build_kb():
             pp = m["PP"]
             effect = m["Effect"] if m["Effect"] else "—"
             out.write(
-                f"{name} — Type={type_}; Category={cat}; Power={power}; Accuracy={acc}; PP={pp}. "
+                f"Move — {name} — Type={type_}; Category={cat}; Power={power}; Accuracy={acc}; PP={pp}. "
                 f"Effect: {effect}.\n"
             )
 
@@ -384,7 +384,7 @@ def build_kb():
         out.write("\nItem Locations:\n")
         if items:
             for item in sorted(items, key=lambda x: x["name"].lower()):
-                out.write(f"{item['name']}: {item['summary']}\n")
+                out.write(f"Item — {item['name']} — {item['summary']}\n")
         else:
             out.write("(No item locations found)\n")
 
