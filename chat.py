@@ -18,14 +18,35 @@ print("\n")
 
 # 4. do a semantic search for 5 relevant passages to a semantic_query and add it to the context window of the agent
 semantic_query = input("Enter a semantic search query: ")
-agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=2, semantic_debug=debug)
+agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=5, semantic_debug=debug)
 
 # 5. start the chat with a question about the uploaded content.
 message = input("Enter your question about the uploaded document: ")
 response_stream = agent.chat(message)
 print("\n")
 print(f"You: {message}")
-agent.print_stream(response_stream)
+try:
+	first_chunk = next(response_stream)
+except StopIteration:
+	first_chunk = None
+
+# If the first attempt yielded no chunks, retry once
+if first_chunk is None:
+	response_stream = agent.chat(message)
+	try:
+		first_chunk = next(response_stream)
+	except StopIteration:
+		first_chunk = None
+
+if first_chunk is not None:
+	def _prepend_stream(head, tail):
+		yield head
+		for c in tail:
+			yield c
+	agent.print_stream(_prepend_stream(first_chunk, response_stream))
+else:
+	# Still empty; print a newline to keep UX tidy
+	print("")
 
 print("\n")
 print("Continue to chat...")
