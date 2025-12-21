@@ -18,7 +18,7 @@ print("\n")
 
 # 4. do a semantic search for 5 relevant passages to a semantic_query and add it to the context window of the agent
 semantic_query = input("Enter a semantic search query: ")
-agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=2, semantic_debug=debug)
+agent.discuss_document(semantic_query, doc_name="pokemon_kb.txt", semantic_top_k=10, semantic_debug=debug)
 
 # 5. start the chat with a question about the uploaded content.
 message = input("Enter your question about the uploaded document: ")

@@ -2,6 +2,8 @@ from noahs_local_ollama_chat_agent.agent import ollama_chat_agent as BaseAgent
 from noahs_local_ollama_chat_agent.local_sql_db import local_sql_db
 from noahs_local_ollama_chat_agent.local_semantic_db import local_semantic_db
 import os
+import json
+from difflib import SequenceMatcher
 
 
 class PatchedAgent(BaseAgent):
@@ -52,19 +54,90 @@ class PatchedAgent(BaseAgent):
 
 
     def semantically_contextualize(self, message, semantic_top_k=1, semantic_where=None, semantic_contextualize_prompt=None, semantic_debug=False, semantic_context_max=1):
-        # Minimal contextualization: join top-k texts and add a single system prompt
-        context = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
-        print("Context is: ", context)
-        context_text = []
-        for d in context:
-            context_text.append(d["text"])
-        context = " ... ".join(context_text)
+        # Retrieve candidates
+        results = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
+        # Print only candidate IDs when debugging, to reduce noise
+        if semantic_debug:
+            candidate_ids = []
+            for item in results or []:
+                try:
+                    obj = json.loads(item.get("text") or "")
+                    cid = obj.get("id")
+                    if cid is not None:
+                        candidate_ids.append(cid)
+                except Exception:
+                    continue
+            print("Context candidate ids:", candidate_ids)
+
+        # Choose a single best context by comparing the message to each entry's JSON 'id'
+        # If parsing fails or no IDs are present, fall back to the first available text.
+        best = None
+        best_score = -1.0
+        normalized_msg = str(message or "").strip().lower()
+        msg_tokens = [t for t in normalized_msg.split() if t]
+
+        for item in results or []:
+            text = item.get("text") or ""
+            candidate_id = None
+            try:
+                obj = json.loads(text)
+                candidate_id = str(obj.get("id", "")).strip().lower()
+            except Exception:
+                candidate_id = None
+
+            # Compute similarity between the message and the candidate 'id' only
+            score = 0.0
+            if candidate_id:
+                # Exact match
+                if candidate_id == normalized_msg:
+                    score = 1.0
+                # Substring match
+                elif candidate_id in normalized_msg:
+                    score = 0.99
+                # Token intersection heuristic
+                elif any(tok in msg_tokens for tok in candidate_id.split()):
+                    score = 0.95
+                else:
+                    # Partial ratio: best against full message or any individual token
+                    score = SequenceMatcher(None, normalized_msg, candidate_id).ratio()
+                    for tok in msg_tokens:
+                        score = max(score, SequenceMatcher(None, tok, candidate_id).ratio())
+
+            # Prefer higher ID-based score; tie-breaker uses semantic distance if available
+            if score > best_score:
+                best_score = score
+                best = item
+            elif score == best_score and best is not None:
+                # Tie-break on smaller distance (closer semantic match)
+                try:
+                    d_cur = float(item.get("distance")) if item.get("distance") is not None else float("inf")
+                    d_best = float(best.get("distance")) if best.get("distance") is not None else float("inf")
+                    if d_cur < d_best:
+                        best = item
+                except Exception:
+                    pass
+
+        # Fallback if no score improved or list empty
+        if best is None and results:
+            best = results[0]
+
+        # Final context string: single best text (not a join)
+        context = None
+        if best is not None:
+            context = best.get("text") or ""
 
         # Include semantic context if applicable
         if context is not None:
             if semantic_debug:
-                # Simpler debug: print only the combined context string
-                print("\nSemantic retrieval debug:", context)
+                # Debug: show chosen item id (if JSON) and similarity score
+                chosen_id = None
+                try:
+                    chosen_obj = json.loads(context)
+                    chosen_id = chosen_obj.get("id")
+                except Exception:
+                    pass
+                print("\nSemantic retrieval debug: chosen_id=", chosen_id, " score=", best_score)
+                print("Context text:", context)
                 
             if semantic_contextualize_prompt is None:
                 self.add_context("This information may be relevant to the conversation ... " + str(context))
