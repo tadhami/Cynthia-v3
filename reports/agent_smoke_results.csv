@@ -1,3 +1,3 @@
 test_id,semantic_query,question,response
-1,Abra locations in Red/Blue,Where is Abra in Red and Blue?,"In Pokémon Red and Blue, you can find Abra on Routes 24 and 25."
-2,Thunderbolt move details,"Give Thunderbolt's power, accuracy, PP, and effect.",Let me break it down for you.   The move Thunderbolt has the following specifications:  - Power: 90 - Accuracy: 100 - PP (Powder Powder Cost): 15 - Effect: May paralyze opponent.
+1,Information about Abra,How does Abra evolve?,"Abra evolves into Kadabra when it reaches level 16, but there's an additional condition for its evolution into Alakazam: either trading it or exposing it to a Linking Cord (in Pokémon Legends: Arceus)."
+2,Information about Thunderbolt,"Give Thunderbolt's power, accuracy, PP, and effect.","Let me summarize it for you:  Thunderbolt has a power of 90, an accuracy of 100, 15 PP (power points), and its effect is that it may cause paralysis to the opponent."
