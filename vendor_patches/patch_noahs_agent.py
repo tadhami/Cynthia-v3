@@ -56,18 +56,15 @@ class PatchedAgent(BaseAgent):
     def semantically_contextualize(self, message, semantic_top_k=1, semantic_where=None, semantic_contextualize_prompt=None, semantic_debug=False, semantic_context_max=1):
         # Retrieve candidates
         results = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
-        # Print only candidate IDs when debugging, to reduce noise
+        # Print only candidate "<category> — <id>" labels when debugging, to reduce noise
         if semantic_debug:
-            candidate_ids = []
+            candidate_labels = []
             for item in results or []:
-                try:
-                    obj = json.loads(item.get("text") or "")
-                    cid = obj.get("id")
-                    if cid is not None:
-                        candidate_ids.append(cid)
-                except Exception:
-                    continue
-            print("Context candidate ids:", candidate_ids)
+                text = item.get("text") or ""
+                parts = text.strip().split(" — ")
+                if len(parts) >= 2:
+                    candidate_labels.append(f"{parts[0].strip()} — {parts[1].strip()}")
+            print("Context candidate ids:", candidate_labels)
 
         # Choose a single best context by comparing the message to each entry's JSON 'id'
         # If parsing fails or no IDs are present, fall back to the first available text.
@@ -78,12 +75,8 @@ class PatchedAgent(BaseAgent):
 
         for item in results or []:
             text = item.get("text") or ""
-            candidate_id = None
-            try:
-                obj = json.loads(text)
-                candidate_id = str(obj.get("id", "")).strip().lower()
-            except Exception:
-                candidate_id = None
+            parts = text.strip().split(" — ")
+            candidate_id = (parts[1].strip().lower() if len(parts) >= 2 else "")
 
             # Compute similarity between the message and the candidate 'id' only
             score = 0.0
@@ -129,13 +122,9 @@ class PatchedAgent(BaseAgent):
         # Include semantic context if applicable
         if context is not None:
             if semantic_debug:
-                # Debug: show chosen item id (if JSON) and similarity score
-                chosen_id = None
-                try:
-                    chosen_obj = json.loads(context)
-                    chosen_id = chosen_obj.get("id")
-                except Exception:
-                    pass
+                # Debug: show chosen header id and similarity score
+                parts = context.strip().split(" — ")
+                chosen_id = parts[1].strip() if len(parts) >= 2 else None
                 print("\nSemantic retrieval debug: chosen_id=", chosen_id, " score=", best_score)
                 print("Context text:", context)
                 
