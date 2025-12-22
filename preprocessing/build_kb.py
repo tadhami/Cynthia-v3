@@ -256,7 +256,8 @@ def load_pokemon_locations(path: Path, id_to_name: dict[str, str]):
             for g in game_cols:
                 val = clean_text(row.get(g) or "")
                 if val:
-                    parts.append(f"{g}: {val}")
+                    # Prefix game names with "Pokemon " for clarity across entries
+                    parts.append(f"Pokemon {g}: {val}")
             if parts:
                 locs[name] = "; ".join(parts)
     return locs
@@ -281,7 +282,8 @@ def load_item_locations(path: Path):
             for g in game_cols:
                 val = clean_text(row.get(g) or "")
                 if val:
-                    parts.append(f"{g}: {val}")
+                    # Prefix game names with "Pokemon " for consistency with Pokémon locations
+                    parts.append(f"Pokemon {g}: {val}")
             summary = "; ".join(parts) if parts else "Locations unavailable"
             items.append({"name": name, "summary": summary})
     return items
