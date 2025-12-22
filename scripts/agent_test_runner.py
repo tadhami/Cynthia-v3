@@ -18,109 +18,123 @@ OUT_CSV = REPORTS_DIR / "agent_test_results.csv"
 
 
 def build_test_cases():
-    """Return ~50 test cases covering locations, evolutions, types/stats, items, and moves.
+    """Return a broad set of test cases covering Pokemon, Moves, and Items.
+    All semantic queries follow the convention: "Information about <Pokemon|Move|Item>".
     Each test case is a dict with keys: semantic_query, question.
     """
     tests = []
 
-    # Locations in specific games
-    locations = [
-        ("Regirock locations in Emerald", "Where can I find Regirock in Emerald?"),
-        ("Registeel locations in Emerald", "Where can I find Registeel in Emerald?"),
-        ("Abra locations in Red/Blue", "Where is Abra in Red and Blue?"),
-        ("Aipom locations in Gold/Silver", "Where can I find Aipom in Gold or Silver?"),
-        ("Aggron locations in Ruby/Sapphire/Emerald", "Where do I get Aggron in Ruby, Sapphire, or Emerald?"),
-        ("Aerodactyl Old Amber revival", "How do I obtain Aerodactyl in FireRed/LeafGreen?"),
-        ("Altaria locations in Ruby/Sapphire", "Where is Altaria in Ruby and Sapphire?"),
-        ("Alcremie locations in Sword/Shield", "Where do I find Alcremie in Sword or Shield?"),
-        ("Appletun raid locations", "Where can I find Appletun in Shield raids?"),
-        ("Applin locations in Sword/Shield", "Where is Applin in the Galar region?"),
+    # Pokemon: Locations and game-specific availability
+    pokemon_locations = [
+        ("Regirock", "Where can I find Regirock in Emerald?"),
+        ("Registeel", "Where can I find Registeel in Emerald?"),
+        ("Abra", "Where is Abra in Red and Blue?"),
+        ("Aipom", "Where can I find Aipom in Gold or Silver?"),
+        ("Aggron", "Where do I get Aggron in Ruby, Sapphire, or Emerald?"),
+        ("Aerodactyl", "How do I obtain Aerodactyl in FireRed/LeafGreen?"),
+        ("Altaria", "Where is Altaria in Ruby and Sapphire?"),
+        ("Alcremie", "Where do I find Alcremie in Sword or Shield?"),
+        ("Appletun", "Where can I find Appletun in Shield raids?"),
+        ("Applin", "Where is Applin in the Galar region?"),
+        ("Blastoise", "Where is Blastoise available across games?"),
+        ("Bulbasaur", "Where can I find Bulbasaur in early games?"),
     ]
 
-    # Evolutions
-    evolutions = [
-        ("Abra evolves", "How does Abra evolve?"),
-        ("Kadabra to Alakazam evolution", "How does Kadabra evolve into Alakazam?"),
-        ("Applin branching evolutions", "How does Applin evolve into Flapple and Appletun?"),
-        ("Aegislash evolution", "How do you evolve Doublade into Aegislash?"),
-        ("Amaura to Aurorus evolution", "How does Amaura evolve into Aurorus?"),
-        ("Ambipom evolution requirement", "How do I evolve Aipom into Ambipom?"),
-        ("Armaldo evolution", "How do you get Armaldo from Anorith?"),
-        ("Azumarill evolution path", "How does Marill evolve into Azumarill?"),
-        ("Avalugg evolution", "How does Bergmite evolve into Avalugg?"),
-        ("Alolan forms evolution info", "Is Alolan Raichu an evolution and how?"),
+    # Pokemon: Evolutions
+    pokemon_evolutions = [
+        ("Abra", "How does Abra evolve?"),
+        ("Kadabra", "How does Kadabra evolve into Alakazam?"),
+        ("Applin", "How does Applin evolve into Flapple and Appletun?"),
+        ("Doublade", "How do you evolve Doublade into Aegislash?"),
+        ("Amaura", "How does Amaura evolve into Aurorus?"),
+        ("Aipom", "How do I evolve Aipom into Ambipom?"),
+        ("Anorith", "How do you get Armaldo from Anorith?"),
+        ("Marill", "How does Marill evolve into Azumarill?"),
+        ("Bergmite", "How does Bergmite evolve into Avalugg?"),
+        ("Raichu", "Is Alolan Raichu an evolution and how?"),
     ]
 
-    # Types, weaknesses, resistances, immunities
-    typings = [
-        ("Abomasnow weaknesses and resists", "What is Abomasnow weak to and what does it resist?"),
-        ("Aegislash immunities", "What types is Aegislash immune to?"),
-        ("Aggron resistances", "What resistances does Aggron have?"),
-        ("Altaria weaknesses", "What is Altaria weak to?"),
-        ("Arcanine resistances", "What types does Arcanine resist?"),
-        ("Appletun weaknesses", "List Appletun's weaknesses and immunities."),
-        ("Applin resistances", "What does Applin resist?"),
-        ("Araquanid weaknesses", "What is Araquanid weak to?"),
-        ("Arbok immunities", "Does Arbok have any immunities?"),
-        ("Articuno typing and weaknesses", "What type is Articuno and its weaknesses?"),
+    # Pokemon: Types, weaknesses, resistances, immunities
+    pokemon_typings = [
+        ("Abomasnow", "What is Abomasnow weak to and what does it resist?"),
+        ("Aegislash", "What types is Aegislash immune to?"),
+        ("Aggron", "What resistances does Aggron have?"),
+        ("Altaria", "What is Altaria weak to?"),
+        ("Arcanine", "What types does Arcanine resist?"),
+        ("Appletun", "List Appletun's weaknesses and immunities."),
+        ("Applin", "What does Applin resist?"),
+        ("Araquanid", "What is Araquanid weak to?"),
+        ("Arbok", "Does Arbok have any immunities?"),
+        ("Articuno", "What type is Articuno and its weaknesses?"),
     ]
 
-    # Stats and metadata (classification, abilities, height/weight, base total)
-    stats_meta = [
-        ("Abra stats and classification", "What is Abra's classification, abilities, height/weight, and base total?"),
-        ("Absol classification and abilities", "What is Absol's classification and abilities?"),
-        ("Aggron base total and abilities", "What is Aggron's base stat total and abilities?"),
-        ("Alakazam base total", "What is Alakazam's base stat total?"),
-        ("Aromatisse classification", "What is Aromatisse's classification?"),
-        ("Aron abilities", "What are Aron's abilities?"),
-        ("Azumarill base total", "What is Azumarill's base total?"),
-        ("Abomasnow height and weight", "What are Abomasnow's height and weight?"),
-        ("Alcremie abilities", "What are Alcremie's abilities?"),
-        ("Arcanine classification and stats", "Give Arcanine's classification and base stat total."),
+    # Pokemon: Stats and metadata (classification, abilities, height/weight, base total)
+    pokemon_stats_meta = [
+        ("Abra", "What is Abra's classification, abilities, height/weight, and base total?"),
+        ("Absol", "What is Absol's classification and abilities?"),
+        ("Aggron", "What is Aggron's base stat total and abilities?"),
+        ("Alakazam", "What is Alakazam's base stat total?"),
+        ("Aromatisse", "What is Aromatisse's classification?"),
+        ("Aron", "What are Aron's abilities?"),
+        ("Azumarill", "What is Azumarill's base total?"),
+        ("Abomasnow", "What are Abomasnow's height and weight?"),
+        ("Alcremie", "What are Alcremie's abilities?"),
+        ("Arcanine", "Give Arcanine's classification and base stat total."),
     ]
 
-    # Item locations across games
-    items = [
-        ("Master Ball locations", "Where can I find a Master Ball in different games?"),
-        ("Exp. Share locations", "Where is the Exp. Share found across mainline games?"),
-        ("Fire Stone locations", "Where can I get a Fire Stone?"),
-        ("Water Stone locations", "Where can I get a Water Stone?"),
-        ("Thunder Stone locations", "Where can I get a Thunder Stone?"),
-        ("Leaf Stone locations", "Where can I get a Leaf Stone?"),
-        ("Dusk Stone locations", "Where is Dusk Stone found?"),
-        ("Soothe Bell locations", "Where is Soothe Bell located in different games?"),
-        ("Linking Cord locations", "Where do I find a Linking Cord?"),
-        ("Soul Dew locations", "Where can I get a Soul Dew?"),
+    # Items: general locations and game-specific availability
+    item_questions = [
+        ("Master Ball", "Where can I find a Master Ball in different games?"),
+        ("Exp. Share", "Where is the Exp. Share found across mainline games?"),
+        ("Fire Stone", "Where can I get a Fire Stone?"),
+        ("Water Stone", "Where can I get a Water Stone?"),
+        ("Thunder Stone", "Where can I get a Thunder Stone?"),
+        ("Leaf Stone", "Where can I get a Leaf Stone?"),
+        ("Dusk Stone", "Where is Dusk Stone found?"),
+        ("Soothe Bell", "Where is Soothe Bell located in different games?"),
+        ("Linking Cord", "Where do I find a Linking Cord?"),
+        ("Soul Dew", "Where can I get a Soul Dew?"),
+        ("Honey", "Where do I obtain Honey?"),
+        ("Honey", "Can I obtain Honey in Pokemon Diamond?"),
+        ("Honey", "Which games can I obtain Honey?"),
     ]
 
-    # Move questions (type, category, power, accuracy, PP, effect)
-    moves = [
-        ("Hyper Beam move details", "What are Hyper Beam's type, power, accuracy, PP, and effect?"),
-        ("Thunderbolt move details", "Give Thunderbolt's power, accuracy, PP, and effect."),
-        ("Earthquake move details", "What is Earthquake's power and effect?"),
-        ("Ice Beam move details", "Summarize Ice Beam's type and effect."),
-        ("Flamethrower move details", "What are Flamethrower's stats and effect?"),
-        ("Surf move details", "Provide Surf's type, power, accuracy, PP, and effect."),
-        ("Psychic move details", "What does the move Psychic do?"),
-        ("Shadow Ball move details", "Summarize Shadow Ball's type and effect."),
-        ("Stone Edge move details", "Give Stone Edge's power and accuracy."),
-        ("Focus Blast move details", "What are Focus Blast's stats and effect?"),
+    # Moves: type, category, stats, and effects
+    move_questions = [
+        ("Hyper Beam", "What are Hyper Beam's type, power, accuracy, PP, and effect?"),
+        ("Thunderbolt", "Give Thunderbolt's power, accuracy, PP, and effect."),
+        ("Earthquake", "What is Earthquake's power and effect?"),
+        ("Ice Beam", "Summarize Ice Beam's type and effect."),
+        ("Flamethrower", "What are Flamethrower's stats and effect?"),
+        ("Surf", "Provide Surf's type, power, accuracy, PP, and effect."),
+        ("Psychic", "What does the move Psychic do?"),
+        ("Shadow Ball", "Summarize Shadow Ball's type and effect."),
+        ("Stone Edge", "Give Stone Edge's power and accuracy."),
+        ("Focus Blast", "What are Focus Blast's stats and effect?"),
     ]
 
-    for category in (locations, evolutions, typings, stats_meta, items, moves):
-        for sem, q in category:
-            tests.append({"semantic_query": sem, "question": q})
+    # Assemble tests using the "Information about …" semantic query convention
+    for name, q in pokemon_locations:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
+    for name, q in pokemon_evolutions:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
+    for name, q in pokemon_typings:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
+    for name, q in pokemon_stats_meta:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
+    for name, q in item_questions:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
+    for name, q in move_questions:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
 
-    # Add a few more mixed cases to approach ~50
+    # A few more mixed Pokemon cases using the same convention
     extras = [
-        ("Where to find Bulbasaur", "Where can I find Bulbasaur in early games?"),
-        ("Beedrill typing and weaknesses", "What type is Beedrill and its weaknesses?"),
-        ("Charizard move details", "What are notable moves for Charizard?"),
-        ("Blastoise locations", "Where is Blastoise available across games?"),
-        ("Butterfree moves", "List key move details for Butterfree."),
+        ("Beedrill", "What type is Beedrill and its weaknesses?"),
+        ("Charizard", "What are notable moves for Charizard?"),
+        ("Butterfree", "List key move details for Butterfree."),
     ]
-    for sem, q in extras:
-        tests.append({"semantic_query": sem, "question": q})
+    for name, q in extras:
+        tests.append({"semantic_query": f"Information about {name}", "question": q})
 
     return tests
 

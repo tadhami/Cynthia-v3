@@ -16,14 +16,14 @@ OUT_CSV = REPORTS_DIR / "agent_smoke_results.csv"
 
 
 def build_test_cases():
-    """Return 2 simple test cases to validate the runner logic."""
+    """Return simple test cases using the "Information about …" convention."""
     return [
-        {  # Game-specific location question present in KB
-            "semantic_query": "Abra locations in Red/Blue",
-            "question": "Where is Abra in Red and Blue?",
+        {
+            "semantic_query": "Information about Abra",
+            "question": "How does Abra evolve?",
         },
-        {  # Move details question present in KB
-            "semantic_query": "Thunderbolt move details",
+        {
+            "semantic_query": "Information about Thunderbolt",
             "question": "Give Thunderbolt's power, accuracy, PP, and effect.",
         },
     ]
