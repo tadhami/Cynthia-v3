@@ -14,6 +14,9 @@ agent.semantic_db.purge_collection();
 # 3. upload consolidated Pokémon knowledge base split by lines so each entry is intact
 agent.upload_document("data/processed/pokemon_kb.txt", max_sentences_per_chunk=1, split_mode="lines")
 
+# Constrain the agent: only answer based on provided context
+agent.add_context("Answer ONLY based on the provided context.")
+
 print("\n")
 
 # 4. do a semantic search for 5 relevant passages to a semantic_query and add it to the context window of the agent
