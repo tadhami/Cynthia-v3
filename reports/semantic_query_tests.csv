@@ -1,0 +1,51 @@
+semantic_query,candidates,identified_candidate
+information about the item pep-up plant,Item — Ice Heal; Item — Burn Heal,Pep-Up Plant
+Information about the Item pep-up plant,Item — Ice Heal; Item — Burn Heal,Pep-Up Plant
+item pep-up plant,Item — Ice Heal; Item — White Herb; Item — Awakening; Item — Burn Heal; Item — Miracle Seed; Item — Mental Herb; Item — Super Potion; Item — EnergyPowder; Item — Upgrade; Item — Pure Incense,Pep-Up Plant
+Item: pep-up plant,Item — Ice Heal; Item — White Herb; Item — Awakening; Item — Burn Heal; Item — Super Potion; Item — Miracle Seed; Item — EnergyPowder; Item — Mental Herb,Pep-Up Plant
+Item — pep-up plant,Item — Ice Heal; Item — White Herb; Item — Awakening; Item — Burn Heal; Item — Miracle Seed; Item — Mental Herb; Item — Super Potion; Item — EnergyPowder,Pep-Up Plant
+info on item pep-up plant,Item — Ice Heal; Item — Burn Heal; Item — Super Potion; Item — Awakening,Pep-Up Plant
+information about the item antidote,Move — Corrosive Gas; Move — Acid; Move — Gastro Acid; Move — Toxic; Move — Poison Powder; Move — Poison Sting; Move — Sludge Bomb; Move — Sludge Wave; Move — Poison Jab; Move — Max Ooze,Antidote
+Information about the Item antidote,Move — Corrosive Gas; Move — Acid; Move — Gastro Acid; Move — Toxic; Move — Poison Powder; Move — Poison Sting; Move — Sludge Bomb; Move — Sludge Wave; Move — Poison Jab; Move — Max Ooze,Antidote
+item antidote,Move — Corrosive Gas; Move — Acid; Move — Recycle; Move — Knock Off; Move — Gastro Acid; Move — Sludge Bomb; Move — Toxic; Move — Sludge Wave; Move — Poison Powder; Move — Poison Sting,Antidote
+Item: antidote,Move — Corrosive Gas; Move — Acid; Move — Toxic; Move — Gastro Acid; Move — Knock Off; Move — Sludge Bomb; Move — Sludge Wave; Move — Poison Powder; Move — Poison Sting; Move — Struggle Bug,Antidote
+Item — antidote,Move — Corrosive Gas; Move — Acid; Move — Toxic; Move — Knock Off; Move — Sludge Bomb; Move — Gastro Acid; Move — Sludge Wave; Move — Poison Powder; Move — Poison Sting; Move — Recycle,Antidote
+info on item antidote,Move — Corrosive Gas; Move — Acid; Move — Toxic; Move — Gastro Acid; Move — Poison Powder; Move — Sludge Bomb; Move — Poison Sting; Move — Poison Jab; Move — Sludge Wave; Move — Absorb,Antidote
+information about the item super repel,Move — Bestow; Move — Multi-Attack; Move — Corrosive Gas; Move — Metal Burst; Move — Superpower; Move — Acrobatics; Move — Recycle; Move — Head Smash; Move — Sludge Bomb; Move — Icicle Spear,Super Repel
+Information about the Item super repel,Move — Bestow; Move — Multi-Attack; Move — Corrosive Gas; Move — Metal Burst; Move — Superpower; Move — Acrobatics; Move — Recycle; Move — Head Smash; Move — Sludge Bomb; Move — Icicle Spear,Super Repel
+item super repel,Move — Bestow; Move — Recycle; Move — Corrosive Gas; Move — Multi-Attack; Move — Fling; Move — Acrobatics; Move — Overheat; Move — Embargo; Move — Metal Burst; Move — Switcheroo,Super Repel
+Item: super repel,Move — Bestow; Move — Recycle; Move — Overheat; Move — Multi-Attack; Move — Corrosive Gas; Move — Embargo; Move — Struggle Bug; Move — Fling; Move — Superpower; Move — Acrobatics,Super Repel
+Item — super repel,Move — Bestow; Move — Recycle; Move — Corrosive Gas; Move — Multi-Attack; Move — Acrobatics; Move — Embargo; Move — Overheat; Move — Fling; Move — Metal Burst; Move — Struggle Bug,Super Repel
+info on item super repel,Move — Bestow; Move — Multi-Attack; Move — Metal Burst; Move — Corrosive Gas; Move — Superpower; Move — Overheat; Move — Head Smash; Move — Recycle; Move — Acrobatics; Move — Fling,Super Repel
+information about the item charcoal,Move — Lava Plume; Move — Corrosive Gas; Move — Scorching Sands; Move — Sandsear Storm; Move — Sludge Wave; Move — Flamethrower; Move — Aurora Veil; Move — Heat Wave; Type — Steel; Move — Searing Shot,Charcoal
+Information about the Item charcoal,Move — Lava Plume; Move — Corrosive Gas; Move — Scorching Sands; Move — Sandsear Storm; Move — Sludge Wave; Move — Flamethrower; Move — Aurora Veil; Move — Heat Wave; Type — Steel; Move — Searing Shot,Charcoal
+item charcoal,Item — Lava Cookie,Charcoal
+Item: charcoal,Item — Lava Cookie; Item — Pure Incense; Item — Dusk Stone; Item — Oval Stone; Item — Burn Heal,Charcoal
+Item — charcoal,Item — Lava Cookie; Item — Pure Incense; Item — Dusk Stone; Item — Electric Gem,Charcoal
+info on item charcoal,Move — Lava Plume; Move — Corrosive Gas; Move — Sandsear Storm; Move — Scorching Sands; Move — Sludge Wave; Type — Steel; Move — Flamethrower; Move — Aurora Veil; Move — Searing Shot; Move — Heat Wave,Charcoal
+information about the item white herb,Item — White Herb; Item — Burn Heal; Item — Super Potion; Item — Lemonade,White Herb
+Information about the Item white herb,Item — White Herb; Item — Burn Heal; Item — Super Potion; Item — Lemonade,White Herb
+item white herb,Item — White Herb; Item — Lemonade; Item — Burn Heal; Item — Super Potion; Item — Pure Incense; Item — Mental Herb; Item — Awakening; Item — BrightPowder; Item — Grass Gem; Item — Normal Gem,White Herb
+Item: white herb,Item — White Herb; Item — Burn Heal; Item — Super Potion; Item — Lemonade; Item — Pure Incense; Item — Mental Herb; Item — Awakening; Item — BrightPowder; Item — Ice Heal,White Herb
+Item — white herb,Item — White Herb; Item — Lemonade; Item — Burn Heal; Item — Super Potion; Item — Pure Incense; Item — Mental Herb; Item — BrightPowder; Item — Awakening; Item — White Apricorn; Item — Grass Gem,White Herb
+info on item white herb,Item — White Herb; Item — Super Potion; Item — Burn Heal; Item — Lemonade,White Herb
+information about the pokemon piplup,Pokemon — Buneary; Pokemon — Sirfetch'd; Pokemon — Combusken; Pokemon — Herdier; Pokemon — Pachirisu; Pokemon — Lickitung; Pokemon — Naganadel; Pokemon — Spheal; Pokemon — Igglybuff; Pokemon — Nuzleaf,Piplup
+Information about the Pokemon piplup,Pokemon — Buneary; Pokemon — Sirfetch'd; Pokemon — Combusken; Pokemon — Herdier; Pokemon — Pachirisu; Pokemon — Lickitung; Pokemon — Naganadel; Pokemon — Spheal; Pokemon — Igglybuff; Pokemon — Nuzleaf,Piplup
+pokemon piplup,Pokemon — Sirfetch'd; Pokemon — Herdier; Pokemon — Buneary; Pokemon — Igglybuff; Pokemon — Combusken; Pokemon — Gastrodon; Pokemon — Slurpuff; Pokemon — Machoke,Piplup
+Pokemon: piplup,Pokemon — Buneary; Pokemon — Herdier; Pokemon — Sirfetch'd; Pokemon — Combusken; Pokemon — Igglybuff; Pokemon — Slurpuff; Pokemon — Machoke; Pokemon — Gastrodon,Piplup
+Pokémon piplup,Pokemon — Sirfetch'd; Pokemon — Herdier; Pokemon — Buneary; Pokemon — Igglybuff; Pokemon — Combusken; Pokemon — Gastrodon; Pokemon — Slurpuff; Pokemon — Machoke,Piplup
+info on pokemon piplup,Pokemon — Buneary; Pokemon — Sirfetch'd; Pokemon — Combusken; Pokemon — Herdier; Pokemon — Lickitung; Pokemon — Nuzleaf; Pokemon — Blaziken; Pokemon — Slurpuff; Pokemon — Naganadel; Pokemon — Spheal,Piplup
+information about the pokemon breloom,Pokemon — Shroomish; Pokemon — Lombre; Pokemon — Tympole; Pokemon — Bruxish; Pokemon — Bronzong; Pokemon — Feebas; Pokemon — Charmander; Pokemon — Palpitoad; Pokemon — Barraskewda; Pokemon — Chatot,Breloom
+Information about the Pokemon breloom,Pokemon — Shroomish; Pokemon — Lombre; Pokemon — Tympole; Pokemon — Bruxish; Pokemon — Bronzong; Pokemon — Feebas; Pokemon — Charmander; Pokemon — Palpitoad; Pokemon — Barraskewda; Pokemon — Chatot,Breloom
+pokemon breloom,Pokemon — Shroomish; Pokemon — Bronzong; Pokemon — Feebas; Pokemon — Charmander; Pokemon — Tympole; Pokemon — Lombre; Pokemon — Bruxish; Pokemon — Pelipper; Pokemon — Eevee; Pokemon — Beedrill,Breloom
+Pokemon: breloom,Pokemon — Shroomish; Pokemon — Bronzong; Pokemon — Tympole; Pokemon — Charmander; Pokemon — Lombre; Pokemon — Feebas; Pokemon — Eevee; Pokemon — Pelipper; Pokemon — Bruxish; Pokemon — Palpitoad,Breloom
+Pokémon breloom,Pokemon — Shroomish; Pokemon — Bronzong; Pokemon — Feebas; Pokemon — Charmander; Pokemon — Tympole; Pokemon — Lombre; Pokemon — Bruxish; Pokemon — Pelipper; Pokemon — Eevee; Pokemon — Beedrill,Breloom
+info on pokemon breloom,Pokemon — Shroomish; Pokemon — Feebas; Pokemon — Lombre; Pokemon — Tympole; Pokemon — Bronzong; Pokemon — Palpitoad; Pokemon — Charmander; Pokemon — Bruxish; Pokemon — Milotic; Pokemon — Barraskewda,Breloom
+information about the pokemon seedot,Pokemon — Chatot; Pokemon — Nuzleaf; Pokemon — Thundurus; Pokemon — Carnivine; Pokemon — Boldore; Pokemon — Boltund; Pokemon — Spinarak; Pokemon — Mega Pidgeot; Pokemon — Milotic; Pokemon — Nickit,Seedot
+Information about the Pokemon seedot,Pokemon — Chatot; Pokemon — Nuzleaf; Pokemon — Thundurus; Pokemon — Carnivine; Pokemon — Boldore; Pokemon — Boltund; Pokemon — Spinarak; Pokemon — Mega Pidgeot; Pokemon — Milotic; Pokemon — Nickit,Seedot
+pokemon seedot,Pokemon — Nuzleaf; Pokemon — Chatot; Pokemon — Mega Pidgeot; Pokemon — Boldore; Pokemon — Spinarak; Pokemon — Seviper; Pokemon — Snivy; Pokemon — Eevee; Pokemon — Charmander,Seedot
+Pokemon: seedot,Pokemon — Nuzleaf; Pokemon — Chatot; Pokemon — Snivy; Pokemon — Boldore; Pokemon — Seviper; Pokemon — Mega Pidgeot; Pokemon — Eevee; Pokemon — Charmander,Seedot
+Pokémon seedot,Pokemon — Nuzleaf; Pokemon — Chatot; Pokemon — Mega Pidgeot; Pokemon — Boldore; Pokemon — Spinarak; Pokemon — Seviper; Pokemon — Snivy; Pokemon — Eevee; Pokemon — Charmander,Seedot
+info on pokemon seedot,Pokemon — Nuzleaf; Pokemon — Chatot; Pokemon — Boldore; Pokemon — Milotic; Pokemon — Thundurus; Pokemon — Carnivine; Pokemon — Boltund; Pokemon — Mega Pidgeot; Pokemon — Spinarak; Pokemon — Nickit,Seedot
+information about the pokemon anorith,Pokemon — Sneasel; Pokemon — Naganadel; Pokemon — Spinarak; Pokemon — Horsea; Pokemon — Combusken; Pokemon — Blaziken; Pokemon — Teddiursa; Pokemon — Zorua; Pokemon — Weavile; Pokemon — Nidorina,Anorith
+Information about the Pokemon anorith,Pokemon — Sneasel; Pokemon — Naganadel; Pokemon — Spinarak; Pokemon — Horsea; Pokemon — Combusken; Pokemon — Blaziken; Pokemon — Teddiursa; Pokemon — Zorua; Pokemon — Weavile; Pokemon — Nidorina,Anorith

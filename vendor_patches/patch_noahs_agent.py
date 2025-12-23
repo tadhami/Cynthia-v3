@@ -13,6 +13,7 @@ from vendor_patches.helpers import (
     find_exact_kb_line,
     candidate_labels,
     select_best_by_id_similarity,
+    normalize_query_text,
 )
 
 
@@ -69,8 +70,7 @@ class PatchedAgent(BaseAgent):
 
         # Intent-based exclusive category filter: if the query mentions a category,
         # restrict candidates to that category. If no matches, fall back to unfiltered results.
-        normalized_msg = str(message or "").strip().lower()
-        msg_tokens = [t for t in normalized_msg.split() if t]
+        normalized_msg, msg_tokens = normalize_query_text(message)
         wants_item, wants_pokemon, wants_move, allowed = intent_from_tokens(msg_tokens)
         maybe_filtered = filter_candidates_by_category(results, allowed)
         if maybe_filtered is not None:

@@ -17,12 +17,48 @@ from __future__ import annotations
 import os
 from typing import Iterable, List, Optional, Set, Tuple
 from difflib import SequenceMatcher
+import re
+import unicodedata
+from unidecode import unidecode
+from rapidfuzz import fuzz
 
 # Constants
 CATEGORY_TOKENS = ("item", "pokemon", "pokémon", "move", "moves")
 LEAD_IN_TOKENS = (":", "-", "about", "information", "info", "on", "of", "the", "named", "called")
 KB_DEFAULT_PATH = os.path.join("data", "processed", "pokemon_kb.txt")
 KB_HEADER_SEP = " — "
+PUNCT_CHARS = ".,:;!?()[]{}'\"’“”`"
+def normalize_query_text(message: Optional[str]) -> Tuple[str, List[str]]:
+    """
+    Normalize a user query for consistent downstream tokenization and matching.
+
+    - Lowercases the string
+    - Replaces common unicode dashes with ASCII dash and spaces around them
+    - Collapses whitespace
+    - Splits into tokens (keeps original punctuation for later stripping by helpers)
+
+    Args:
+        message: Raw user query (may be None).
+
+    Returns:
+        (normalized_msg, msg_tokens)
+
+    Examples:
+        "Pokemon: Piplup" → ("pokemon: piplup", ["pokemon:", "piplup"])  → intent detects "pokemon"
+        "Item — Pep-Up Plant" → ("item - pep-up plant", ["item", "-", "pep-up", "plant"]) → ID extraction OK
+    """
+    s = (message or "").strip()
+    # Unicode canonical compatibility decomposition + recomposition
+    s = unicodedata.normalize("NFKC", s)
+    # Transliterate accents (Pokémon -> Pokemon), then case-fold for robust matching
+    s = unidecode(s).casefold()
+    # Normalize various dashes to a space-dash-space to aid tokenization
+    s = s.replace("—", " - ").replace("–", " - ")
+    # Collapse multiple spaces
+    s = re.sub(r"\s+", " ", s)
+    tokens = [t for t in s.split(" ") if t]
+    return s, tokens
+
 
 
 def intent_from_tokens(msg_tokens: List[str]) -> Tuple[bool, bool, bool, Set[str]]:
@@ -35,9 +71,14 @@ def intent_from_tokens(msg_tokens: List[str]) -> Tuple[bool, bool, bool, Set[str
     Returns:
         wants_item, wants_pokemon, wants_move, allowed_categories
     """
-    wants_item = "item" in msg_tokens  # e.g., ["information","about","the","item","pep-up","plant"] → True
-    wants_pokemon = ("pokemon" in msg_tokens) or ("pokémon" in msg_tokens)  # e.g., ["pokemon","piplup"] → True
-    wants_move = ("move" in msg_tokens) or ("moves" in msg_tokens)  # e.g., ["move","ice","beam"] → True
+    # Normalize tokens by stripping surrounding punctuation so tokens like
+    # "pokemon," or "item:" still map to the category keywords.
+    tokens_norm = [t.strip(PUNCT_CHARS) for t in (msg_tokens or [])]
+    token_set = set(tokens_norm)
+
+    wants_item = "item" in token_set  # e.g., ["information","about","the","item","pep-up","plant"] → True
+    wants_pokemon = ("pokemon" in token_set) or ("pokémon" in token_set)  # e.g., ["pokemon","piplup"] → True
+    wants_move = ("move" in token_set) or ("moves" in token_set)  # e.g., ["move","ice","beam"] → True
     allowed: Set[str] = set()
     if wants_item:  # e.g., allowed becomes {"item"}
         allowed.add("item")
@@ -111,16 +152,26 @@ def extract_probable_id(normalized_msg: str, msg_tokens: List[str]) -> Tuple[Opt
     """
     cat_tok: Optional[str] = None
     for token in CATEGORY_TOKENS:  # e.g., finds "item" in "information about the item pep-up plant"
-        if token in msg_tokens:
+        # Accept raw or punct-stripped membership (handles "pokemon:" etc.)
+        if token in msg_tokens or token in [t.strip(PUNCT_CHARS) for t in msg_tokens]:
             cat_tok = token
             break
     if cat_tok is None:
         return None, None
 
-    pos = normalized_msg.find(cat_tok)  # index of "item" | "pokemon" | "move"
-    tail = normalized_msg[pos + len(cat_tok):].strip()  # e.g., "pep-up plant"
-    for lead in LEAD_IN_TOKENS:  # remove common lead-ins like ":" or "about"
-        tail = tail.lstrip().lstrip(lead).strip()
+    # Locate the category using a word-boundary regex, insensitive to case and punctuation around it
+    m = re.search(r"\b(item|pokemon|pokémon|move|moves)\b", normalized_msg, flags=re.IGNORECASE)
+    if m:
+        pos = m.end()
+    else:
+        pos = normalized_msg.find(cat_tok)
+    tail = normalized_msg[pos:].strip()  # e.g., ": ice beam" → "ice beam"
+    # Remove one or more leading lead-in tokens (as whole tokens), case-insensitive
+    lead_pattern = r"^(?:(?::|\-|about|information|info|on|of|the|named|called)\s*)+"
+    prev = None
+    while prev != tail:
+        prev = tail
+        tail = re.sub(lead_pattern, "", tail, flags=re.IGNORECASE)
 
     probable_id = tail or None  # e.g., returns "pep-up plant"
     return probable_id, cat_tok  # e.g., ("pep-up plant","item") | ("piplup","pokemon") | ("ice beam","move")
@@ -175,16 +226,12 @@ def select_best_by_id_similarity(results: Optional[List[dict]], normalized_msg: 
         # Compute similarity between the message and the candidate 'id' only
         score = 0.0
         if candidate_id:
-            if candidate_id == normalized_msg:  # exact string equality
-                score = 1.0
-            elif candidate_id in normalized_msg:  # candidate id is a substring of the query
-                score = 0.99
-            elif any(tok in msg_tokens for tok in candidate_id.split()):  # token overlap
-                score = 0.95
-            else:  # fallback: partial ratios vs full and per-token
-                score = SequenceMatcher(None, normalized_msg, candidate_id).ratio()
-                for tok in msg_tokens:
-                    score = max(score, SequenceMatcher(None, tok, candidate_id).ratio())
+            # Use rapidfuzz for robust fuzzy scoring across token order and spacing
+            # token_set_ratio handles multi-word comparisons well; scale to [0,1]
+            rf_score = fuzz.token_set_ratio(normalized_msg, candidate_id) / 100.0
+            # Capture strong substring relationships
+            rf_partial = fuzz.partial_ratio(normalized_msg, candidate_id) / 100.0
+            score = max(rf_score, rf_partial)
 
         if score > best_score:
             best_score = score

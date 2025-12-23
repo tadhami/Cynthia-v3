@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from vendor_patches.patch_noahs_agent import PatchedAgent as ollama_chat_agent
+from vendor_patches.helpers import normalize_query_text, intent_from_tokens
 
 # Paths
 KB_PATH = ROOT / "data" / "processed" / "pokemon_kb.txt"
@@ -113,18 +114,29 @@ def build_test_cases():
         ("Focus Blast", "What are Focus Blast's stats and effect?"),
     ]
 
-    # Assemble tests using the "Information about …" semantic query convention
+    # Assemble tests with and without explicit category mentioned in the semantic query
+    # Pokemon: include both "Information about the pokemon <name>" and "Information about <name>"
     for name, q in pokemon_locations:
+        tests.append({"semantic_query": f"Information about the pokemon {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
     for name, q in pokemon_evolutions:
+        tests.append({"semantic_query": f"Information about the pokemon {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
     for name, q in pokemon_typings:
+        tests.append({"semantic_query": f"Information about the pokemon {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
     for name, q in pokemon_stats_meta:
+        tests.append({"semantic_query": f"Information about the pokemon {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
+
+    # Items: include both "Information about the item <name>" and without category
     for name, q in item_questions:
+        tests.append({"semantic_query": f"Information about the item {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
+
+    # Moves: include both "Information about the move <name>" and without category
     for name, q in move_questions:
+        tests.append({"semantic_query": f"Information about the move {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
 
     # A few more mixed Pokemon cases using the same convention
@@ -134,6 +146,7 @@ def build_test_cases():
         ("Butterfree", "List key move details for Butterfree."),
     ]
     for name, q in extras:
+        tests.append({"semantic_query": f"Information about the pokemon {name}", "question": q})
         tests.append({"semantic_query": f"Information about {name}", "question": q})
 
     return tests
@@ -194,10 +207,25 @@ def main():
         else:
             safe_response = str(response_text)
 
+        # Track whether the semantic query explicitly mentions a category (item/pokemon/move)
+        norm_msg, tokens = normalize_query_text(semantic_query)
+        wants_item, wants_pokemon, wants_move, allowed = intent_from_tokens(tokens)
+        if wants_item:
+            category_target = "item"
+        elif wants_pokemon:
+            category_target = "pokemon"
+        elif wants_move:
+            category_target = "move"
+        else:
+            category_target = ""
+        category_mentioned = "yes" if allowed else "no"
+
         rows.append({
             "test_id": idx,
             "semantic_query": semantic_query.replace("\r", " ").replace("\n", " ").strip(),
             "question": question.replace("\r", " ").replace("\n", " ").strip(),
+            "category_mentioned": category_mentioned,
+            "category_target": category_target,
             "response": safe_response,
         })
 
@@ -210,7 +238,7 @@ def main():
     # Write CSV report
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     with OUT_CSV.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["test_id", "semantic_query", "question", "response"])
+        writer = csv.DictWriter(f, fieldnames=["test_id", "semantic_query", "question", "category_mentioned", "category_target", "response"])
         writer.writeheader()
         writer.writerows(rows)
 
