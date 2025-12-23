@@ -89,44 +89,7 @@ def intent_from_tokens(msg_tokens: List[str]) -> Tuple[bool, bool, bool, Set[str
     return wants_item, wants_pokemon, wants_move, allowed
 
 
-def filter_candidates_by_category(results: Optional[List[dict]], allowed: Set[str]) -> Optional[List[dict]]:
-    """
-    Filter query results to only those whose KB header category is in `allowed`.
-
-    KB lines follow the format: "<Category> — <Id> — <...>".
-
-    Args:
-        results: List of semantic DB result dicts with a `text` field.
-        allowed: Set of allowed categories (lowercase), e.g., {"item"}.
-
-    Returns:
-        Filtered list if any matched; otherwise None to indicate no filtering applied.
-    """
-    if not results or not allowed:
-        return None
-
-    filtered: List[dict] = []
-    for item in results:
-        # Each KB entry line follows: "<Category> — <Id> — <...>"
-        # Examples:
-        #   "Item — Antidote — ..." → Category="Item", Id="Antidote"
-        #   "Pokemon — Piplup — ..." → Category="Pokemon", Id="Piplup"
-        text = (item.get("text") or "").strip()
-
-        # Split into header parts; for "Item — Antidote — ..." → ["Item", "Antidote", "..."]
-        parts = text.split(KB_HEADER_SEP)
-
-        # Normalize category to lowercase; yields one of: "item" | "pokemon" | "move"
-        # If the line is malformed (no header), cat becomes "" and will be skipped
-        cat = (parts[0].strip().lower() if len(parts) >= 1 else "")
-
-        # Keep only categories explicitly allowed by the query intent.
-        # Example: if the query mentions "item", allowed = {"item"} and we retain only item entries.
-        if cat in allowed:
-            # Append the matching candidate; e.g., retain "Item — Super Repel — ..." when allowed={"item"}
-            filtered.append(item)
-
-    return filtered if filtered else None
+# Removed: filter_candidates_by_category — category filtering is no longer applied post-query.
 
 
 def candidate_labels(results: Optional[List[dict]]) -> List[str]:

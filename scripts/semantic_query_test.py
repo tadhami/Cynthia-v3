@@ -23,7 +23,6 @@ from vendor_patches.patch_noahs_agent import PatchedAgent
 from vendor_patches.helpers import (
     normalize_query_text,
     intent_from_tokens,
-    filter_candidates_by_category,
     candidate_labels,
     select_best_by_id_similarity,
     extract_probable_id,
@@ -87,13 +86,12 @@ def run_query(agent: PatchedAgent, query: str, top_k: int = 10, doc_name: str = 
     where = {"doc_name": doc_name}
     results = agent.semantic_db.query(query, top_k=top_k, where=where)
 
-    wants_item, wants_pokemon, wants_move, allowed = intent_from_tokens(msg_tokens)
-    maybe_filtered = filter_candidates_by_category(results, allowed)
-    used_results = maybe_filtered if maybe_filtered is not None else results
+    wants_item, wants_pokemon, wants_move, _ = intent_from_tokens(msg_tokens)
 
-    labels = candidate_labels(used_results)
+    # No post-query category filtering; evaluate results as returned
+    labels = candidate_labels(results)
 
-    best, best_score = select_best_by_id_similarity(used_results, normalized_msg, msg_tokens)
+    best, best_score = select_best_by_id_similarity(results, normalized_msg, msg_tokens)
     chosen_id = None
     if best is not None:
         parts = (best.get("text") or "").strip().split(" — ")

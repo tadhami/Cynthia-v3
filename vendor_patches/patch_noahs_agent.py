@@ -6,7 +6,6 @@ import json
 from difflib import SequenceMatcher
 from vendor_patches.helpers import (
     intent_from_tokens,
-    filter_candidates_by_category,
     extract_probable_id,
     kb_header_from_flags,
     resolve_kb_path,
@@ -58,6 +57,7 @@ class PatchedAgent(BaseAgent):
                 text_ids.append(f"{doc_name}-{idx}")
                 idx += 1
             # Difference vs default: use batch_insert directly for pre-chunked texts
+            # batch_insert when you’ve pre-chunked and need to preserve custom boundaries, metadata, and IDs; use insert_in_chunks when you want the semantic DB to handle splitting for you.
             self.semantic_db.batch_insert(texts=texts, metadatas=metadatas, text_ids=text_ids)
         else:
             # Difference vs default: omit split_mode; rely on semantic DB default split behavior
@@ -68,13 +68,9 @@ class PatchedAgent(BaseAgent):
         # Retrieve candidates
         results = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
 
-        # Intent-based exclusive category filter: if the query mentions a category,
-        # restrict candidates to that category. If no matches, fall back to unfiltered results.
+        # Normalize message and compute intent flags for downstream exact-ID fallback
         normalized_msg, msg_tokens = normalize_query_text(message)
-        wants_item, wants_pokemon, wants_move, allowed = intent_from_tokens(msg_tokens)
-        maybe_filtered = filter_candidates_by_category(results, allowed)
-        if maybe_filtered is not None:
-            results = maybe_filtered
+        wants_item, wants_pokemon, wants_move, _ = intent_from_tokens(msg_tokens)
 
         # Print only candidate "<category> — <id>" labels when debugging, to reduce noise
         if semantic_debug:
