@@ -4,6 +4,16 @@ from noahs_local_ollama_chat_agent.local_semantic_db import local_semantic_db
 import os
 import json
 from difflib import SequenceMatcher
+from vendor_patches.helpers import (
+    intent_from_tokens,
+    filter_candidates_by_category,
+    extract_probable_id,
+    kb_header_from_flags,
+    resolve_kb_path,
+    find_exact_kb_line,
+    candidate_labels,
+    select_best_by_id_similarity,
+)
 
 
 class PatchedAgent(BaseAgent):
@@ -56,68 +66,45 @@ class PatchedAgent(BaseAgent):
     def semantically_contextualize(self, message, semantic_top_k=1, semantic_where=None, semantic_contextualize_prompt=None, semantic_debug=False, semantic_context_max=1):
         # Retrieve candidates
         results = self.semantic_db.query(message, top_k=semantic_top_k, where=semantic_where)
+
+        # Intent-based exclusive category filter: if the query mentions a category,
+        # restrict candidates to that category. If no matches, fall back to unfiltered results.
+        normalized_msg = str(message or "").strip().lower()
+        msg_tokens = [t for t in normalized_msg.split() if t]
+        wants_item, wants_pokemon, wants_move, allowed = intent_from_tokens(msg_tokens)
+        maybe_filtered = filter_candidates_by_category(results, allowed)
+        if maybe_filtered is not None:
+            results = maybe_filtered
+
         # Print only candidate "<category> — <id>" labels when debugging, to reduce noise
         if semantic_debug:
-            candidate_labels = []
-            for item in results or []:
-                text = item.get("text") or ""
-                parts = text.strip().split(" — ")
-                if len(parts) >= 2:
-                    candidate_labels.append(f"{parts[0].strip()} — {parts[1].strip()}")
-            print("Context candidate ids:", candidate_labels)
+            print("Context candidate ids:", candidate_labels(results))
 
         # Choose a single best context by comparing the message to each entry's JSON 'id'
         # If parsing fails or no IDs are present, fall back to the first available text.
-        best = None
-        best_score = -1.0
-        normalized_msg = str(message or "").strip().lower()
-        msg_tokens = [t for t in normalized_msg.split() if t]
-
-        for item in results or []:
-            text = item.get("text") or ""
-            parts = text.strip().split(" — ")
-            candidate_id = (parts[1].strip().lower() if len(parts) >= 2 else "")
-
-            # Compute similarity between the message and the candidate 'id' only
-            score = 0.0
-            if candidate_id:
-                # Exact match
-                if candidate_id == normalized_msg:
-                    score = 1.0
-                # Substring match
-                elif candidate_id in normalized_msg:
-                    score = 0.99
-                # Token intersection heuristic
-                elif any(tok in msg_tokens for tok in candidate_id.split()):
-                    score = 0.95
-                else:
-                    # Partial ratio: best against full message or any individual token
-                    score = SequenceMatcher(None, normalized_msg, candidate_id).ratio()
-                    for tok in msg_tokens:
-                        score = max(score, SequenceMatcher(None, tok, candidate_id).ratio())
-
-            # Prefer higher ID-based score; tie-breaker uses semantic distance if available
-            if score > best_score:
-                best_score = score
-                best = item
-            elif score == best_score and best is not None:
-                # Tie-break on smaller distance (closer semantic match)
-                try:
-                    d_cur = float(item.get("distance")) if item.get("distance") is not None else float("inf")
-                    d_best = float(best.get("distance")) if best.get("distance") is not None else float("inf")
-                    if d_cur < d_best:
-                        best = item
-                except Exception:
-                    pass
-
-        # Fallback if no score improved or list empty
-        if best is None and results:
-            best = results[0]
+        best, best_score = select_best_by_id_similarity(results, normalized_msg, msg_tokens)
 
         # Final context string: single best text (not a join)
         context = None
         if best is not None:
             context = best.get("text") or ""
+
+        # Exact-ID fallback: directly load the exact KB line if intent is clear
+        # but semantic retrieval misses the target.
+        try:
+            wants_any = wants_item or wants_pokemon or wants_move
+            weak_match = (best_score < 0.98) or (context is None)
+            if wants_any and weak_match:
+                probable_id, _ = extract_probable_id(normalized_msg, msg_tokens)
+                kb_header = kb_header_from_flags(wants_item, wants_pokemon, wants_move)
+                kb_path = resolve_kb_path(semantic_where)
+                exact_line = find_exact_kb_line(kb_path, kb_header, probable_id)
+                if exact_line:
+                    context = exact_line
+                    best_score = 1.0
+        except Exception:
+            # Ignore fallback failures
+            pass
 
         # Include semantic context if applicable
         if context is not None:
