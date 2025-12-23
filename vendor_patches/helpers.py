@@ -35,15 +35,15 @@ def intent_from_tokens(msg_tokens: List[str]) -> Tuple[bool, bool, bool, Set[str
     Returns:
         wants_item, wants_pokemon, wants_move, allowed_categories
     """
-    wants_item = "item" in msg_tokens
-    wants_pokemon = ("pokemon" in msg_tokens) or ("pokémon" in msg_tokens)
-    wants_move = ("move" in msg_tokens) or ("moves" in msg_tokens)
+    wants_item = "item" in msg_tokens  # e.g., ["information","about","the","item","pep-up","plant"] → True
+    wants_pokemon = ("pokemon" in msg_tokens) or ("pokémon" in msg_tokens)  # e.g., ["pokemon","piplup"] → True
+    wants_move = ("move" in msg_tokens) or ("moves" in msg_tokens)  # e.g., ["move","ice","beam"] → True
     allowed: Set[str] = set()
-    if wants_item:
+    if wants_item:  # e.g., allowed becomes {"item"}
         allowed.add("item")
-    if wants_pokemon:
+    if wants_pokemon:  # e.g., allowed becomes {"pokemon"}
         allowed.add("pokemon")
-    if wants_move:
+    if wants_move:  # e.g., allowed becomes {"move"}
         allowed.add("move")
     return wants_item, wants_pokemon, wants_move, allowed
 
@@ -66,9 +66,9 @@ def filter_candidates_by_category(results: Optional[List[dict]], allowed: Set[st
 
     filtered: List[dict] = []
     for item in results:
-        text = (item.get("text") or "").strip()
+        text = (item.get("text") or "").strip()  # e.g., "Item — Antidote — ..." | "Pokemon — Piplup — ..."
         parts = text.split(KB_HEADER_SEP)
-        cat = (parts[0].strip().lower() if len(parts) >= 1 else "")
+        cat = (parts[0].strip().lower() if len(parts) >= 1 else "")  # "item" | "pokemon" | "move"
         if cat in allowed:
             filtered.append(item)
 
@@ -87,10 +87,10 @@ def candidate_labels(results: Optional[List[dict]]) -> List[str]:
     """
     labels: List[str] = []
     for item in results or []:
-        text = (item.get("text") or "").strip()
+        text = (item.get("text") or "").strip()  # e.g., "Item — Super Repel — ..."
         parts = text.split(KB_HEADER_SEP)
         if len(parts) >= 2:
-            labels.append(f"{parts[0].strip()} — {parts[1].strip()}")
+            labels.append(f"{parts[0].strip()} — {parts[1].strip()}")  # → "Item — Super Repel"
     return labels
 
 
@@ -110,20 +110,20 @@ def extract_probable_id(normalized_msg: str, msg_tokens: List[str]) -> Tuple[Opt
         (probable_id, category_token_used)
     """
     cat_tok: Optional[str] = None
-    for token in CATEGORY_TOKENS:
+    for token in CATEGORY_TOKENS:  # e.g., finds "item" in "information about the item pep-up plant"
         if token in msg_tokens:
             cat_tok = token
             break
     if cat_tok is None:
         return None, None
 
-    pos = normalized_msg.find(cat_tok)
-    tail = normalized_msg[pos + len(cat_tok):].strip()
-    for lead in LEAD_IN_TOKENS:
+    pos = normalized_msg.find(cat_tok)  # index of "item" | "pokemon" | "move"
+    tail = normalized_msg[pos + len(cat_tok):].strip()  # e.g., "pep-up plant"
+    for lead in LEAD_IN_TOKENS:  # remove common lead-ins like ":" or "about"
         tail = tail.lstrip().lstrip(lead).strip()
 
-    probable_id = tail or None
-    return probable_id, cat_tok
+    probable_id = tail or None  # e.g., returns "pep-up plant"
+    return probable_id, cat_tok  # e.g., ("pep-up plant","item") | ("piplup","pokemon") | ("ice beam","move")
 
 
 def kb_header_from_flags(wants_item: bool, wants_pokemon: bool, wants_move: bool) -> str:
@@ -133,11 +133,11 @@ def kb_header_from_flags(wants_item: bool, wants_pokemon: bool, wants_move: bool
     Returns:
         "item" | "pokemon" | "move"
     """
-    if wants_item:
+    if wants_item:  # e.g., True,False,False → "item"
         return "item"
-    if wants_pokemon:
+    if wants_pokemon:  # e.g., False,True,False → "pokemon"
         return "pokemon"
-    return "move"
+    return "move"  # e.g., False,False,True → "move"
 
 
 def select_best_by_id_similarity(results: Optional[List[dict]], normalized_msg: str, msg_tokens: List[str]) -> Tuple[Optional[dict], float]:
@@ -168,20 +168,20 @@ def select_best_by_id_similarity(results: Optional[List[dict]], normalized_msg: 
     best_score: float = -1.0
 
     for item in results or []:
-        text = (item.get("text") or "").strip()
+        text = (item.get("text") or "").strip()  # e.g., "Item — Antidote — ..." | "Item — Pep-Up Plant — ..."
         parts = text.split(KB_HEADER_SEP)
-        candidate_id = (parts[1].strip().lower() if len(parts) >= 2 else "")
+        candidate_id = (parts[1].strip().lower() if len(parts) >= 2 else "")  # "antidote" | "pep-up plant"
 
         # Compute similarity between the message and the candidate 'id' only
         score = 0.0
         if candidate_id:
-            if candidate_id == normalized_msg:
+            if candidate_id == normalized_msg:  # exact string equality
                 score = 1.0
-            elif candidate_id in normalized_msg:
+            elif candidate_id in normalized_msg:  # candidate id is a substring of the query
                 score = 0.99
-            elif any(tok in msg_tokens for tok in candidate_id.split()):
+            elif any(tok in msg_tokens for tok in candidate_id.split()):  # token overlap
                 score = 0.95
-            else:
+            else:  # fallback: partial ratios vs full and per-token
                 score = SequenceMatcher(None, normalized_msg, candidate_id).ratio()
                 for tok in msg_tokens:
                     score = max(score, SequenceMatcher(None, tok, candidate_id).ratio())
@@ -191,7 +191,7 @@ def select_best_by_id_similarity(results: Optional[List[dict]], normalized_msg: 
             best = item
         elif score == best_score and best is not None:
             try:
-                d_cur = float(item.get("distance")) if item.get("distance") is not None else float("inf")
+                d_cur = float(item.get("distance")) if item.get("distance") is not None else float("inf")  # smaller is better
                 d_best = float(best.get("distance")) if best.get("distance") is not None else float("inf")
                 if d_cur < d_best:
                     best = item
@@ -219,8 +219,8 @@ def resolve_kb_path(semantic_where: Optional[dict]) -> str:
     if isinstance(semantic_where, dict):
         doc_name = semantic_where.get("doc_name")
         if isinstance(doc_name, str) and doc_name:
-            kb_path = os.path.join("data", "processed", doc_name)
-    return kb_path or KB_DEFAULT_PATH
+            kb_path = os.path.join("data", "processed", doc_name)  # e.g., doc_name="pokemon_kb.txt"
+    return kb_path or KB_DEFAULT_PATH  # default → data/processed/pokemon_kb.txt
 
 
 def find_exact_kb_line(kb_path: str, kb_header: str, probable_id: Optional[str]) -> Optional[str]:
@@ -238,12 +238,12 @@ def find_exact_kb_line(kb_path: str, kb_header: str, probable_id: Optional[str])
     if not probable_id:
         return None
 
-    target_prefix = f"{kb_header} — {probable_id.strip().lower()} —"
+    target_prefix = f"{kb_header} — {probable_id.strip().lower()} —"  # e.g., "item — pep-up plant —"
     try:
-        with open(kb_path, "r") as f:
+        with open(kb_path, "r") as f:  # e.g., data/processed/pokemon_kb.txt
             for line in f:
-                if line.strip().lower().startswith(target_prefix):
-                    return line.strip()
+                if line.strip().lower().startswith(target_prefix):  # matches "Item — Pep-Up Plant — ..."
+                    return line.strip()  # return the full exact KB line
     except Exception:
         return None
     return None
