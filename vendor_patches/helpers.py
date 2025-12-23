@@ -107,10 +107,23 @@ def filter_candidates_by_category(results: Optional[List[dict]], allowed: Set[st
 
     filtered: List[dict] = []
     for item in results:
-        text = (item.get("text") or "").strip()  # e.g., "Item — Antidote — ..." | "Pokemon — Piplup — ..."
+        # Each KB entry line follows: "<Category> — <Id> — <...>"
+        # Examples:
+        #   "Item — Antidote — ..." → Category="Item", Id="Antidote"
+        #   "Pokemon — Piplup — ..." → Category="Pokemon", Id="Piplup"
+        text = (item.get("text") or "").strip()
+
+        # Split into header parts; for "Item — Antidote — ..." → ["Item", "Antidote", "..."]
         parts = text.split(KB_HEADER_SEP)
-        cat = (parts[0].strip().lower() if len(parts) >= 1 else "")  # "item" | "pokemon" | "move"
+
+        # Normalize category to lowercase; yields one of: "item" | "pokemon" | "move"
+        # If the line is malformed (no header), cat becomes "" and will be skipped
+        cat = (parts[0].strip().lower() if len(parts) >= 1 else "")
+
+        # Keep only categories explicitly allowed by the query intent.
+        # Example: if the query mentions "item", allowed = {"item"} and we retain only item entries.
         if cat in allowed:
+            # Append the matching candidate; e.g., retain "Item — Super Repel — ..." when allowed={"item"}
             filtered.append(item)
 
     return filtered if filtered else None
@@ -159,21 +172,47 @@ def extract_probable_id(normalized_msg: str, msg_tokens: List[str]) -> Tuple[Opt
     if cat_tok is None:
         return None, None
 
-    # Locate the category using a word-boundary regex, insensitive to case and punctuation around it
+    # Locate the first occurrence of a category word using word boundaries.
+    # Why word boundaries? They ensure we match whole words like "move" but not "remove".
+    # The search is case-insensitive and robust to punctuation adjacent to the word (e.g., "pokemon:" or "Item —").
+    # Examples that will match and set pos just after the category token:
+    #   - "pokemon: piplup"      → boundary match on "pokemon" (pos points after "pokemon")
+    #   - "Item — Pep-Up Plant"  → boundary match on "item" (pos points after "item")
+    #   - "info on the move Ice Beam" → boundary match on "move" (pos after "move")
     m = re.search(r"\b(item|pokemon|pokémon|move|moves)\b", normalized_msg, flags=re.IGNORECASE)
     if m:
+        # Start slicing immediately after the matched category token.
         pos = m.end()
     else:
+        # Fallback: use the literal token position (covers rare cases where regex fails)
         pos = normalized_msg.find(cat_tok)
-    tail = normalized_msg[pos:].strip()  # e.g., ": ice beam" → "ice beam"
-    # Remove one or more leading lead-in tokens (as whole tokens), case-insensitive
+
+    # Grab everything after the category token. This should contain the human-given name/ID,
+    # typically preceded by a small lead-in like ":" or "-" or words like "about", "named", etc.
+    # Example:
+    #   ": ice beam" → "ice beam"
+    #   " - pep-up plant" → "pep-up plant"
+    tail = normalized_msg[pos:].strip()
+
+    # Strip any number of lead-in tokens at the beginning of the tail (as whole tokens).
+    # The pattern means: from start (^) consume one-or-more (+) of the following, each optionally followed by spaces:
+    #   - a punctuation token ":" or "-"
+    #   - or one of the words: about, information, info, on, of, the, named, called
+    # This is case-insensitive so variants like "Information:" or "ABOUT" are handled.
+    # We apply it repeatedly until no further change so sequences like ": info on the" are fully removed.
     lead_pattern = r"^(?:(?::|\-|about|information|info|on|of|the|named|called)\s*)+"
     prev = None
     while prev != tail:
         prev = tail
         tail = re.sub(lead_pattern, "", tail, flags=re.IGNORECASE)
 
-    probable_id = tail or None  # e.g., returns "pep-up plant"
+    # At this point, tail should be the clean, human-readable ID we want to match in the KB header.
+    # Examples of final results:
+    #   - Query: "information about the item pep-up plant" → tail: "pep-up plant"
+    #   - Query: "Pokemon: Piplup" → tail: "piplup"
+    #   - Query: "move - Ice Beam" → tail: "ice beam"
+    probable_id = tail or None
+    # Return the probable id and the category token detected so callers know which header to target.
     return probable_id, cat_tok  # e.g., ("pep-up plant","item") | ("piplup","pokemon") | ("ice beam","move")
 
 
