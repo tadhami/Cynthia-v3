@@ -91,17 +91,28 @@ class PatchedAgent(BaseAgent):
 
         # Exact-ID fallback: directly load the exact KB line if intent is clear
         # but semantic retrieval misses the target.
+        #
+        # Test examples (run with --debug):
+        # 1) Query: "Information about the Item Pep-Up Plant"
+        #    - Expected: after item-only filtering, if "Pep-Up Plant" isn't in top-k,
+        #      this fallback finds the exact KB line starting with:
+        #      "Item — Pep-Up Plant — ..." and sets chosen_id= Pep-Up Plant, score= 1.0.
+        # 2) Query: "Pokemon Piplup"
+        #    - Expected: filters to Pokémon; if the exact "Pokemon — Piplup — ..." line
+        #      isn't retrieved, fallback loads it and chosen_id= Piplup, score= 1.0.
+        # 3) Query: "move Ice Beam"
+        #    - Expected: filters to moves; fallback loads "Move — Ice Beam — ..." when missing.
         try:
-            wants_any = wants_item or wants_pokemon or wants_move
-            weak_match = (best_score < 0.98) or (context is None)
-            if wants_any and weak_match:
-                probable_id, _ = extract_probable_id(normalized_msg, msg_tokens)
-                kb_header = kb_header_from_flags(wants_item, wants_pokemon, wants_move)
-                kb_path = resolve_kb_path(semantic_where)
-                exact_line = find_exact_kb_line(kb_path, kb_header, probable_id)
-                if exact_line:
-                    context = exact_line
-                    best_score = 1.0
+            wants_any = wants_item or wants_pokemon or wants_move  # e.g., query "Item Pep-Up Plant" → wants_item=True
+            weak_match = (best_score < 0.98) or (context is None)  # fallback triggers if top-k missed the exact target
+            if wants_any and weak_match:  # only do exact lookup when intent is clear and match is weak
+                probable_id, _ = extract_probable_id(normalized_msg, msg_tokens)  # "Item Pep-Up Plant" → probable_id="pep-up plant"
+                kb_header = kb_header_from_flags(wants_item, wants_pokemon, wants_move)  # maps to "item" | "pokemon" | "move"
+                kb_path = resolve_kb_path(semantic_where)  # defaults to data/processed/pokemon_kb.txt when doc_name not set
+                exact_line = find_exact_kb_line(kb_path, kb_header, probable_id)  # finds "Item — Pep-Up Plant — ..." if present
+                if exact_line:  # when found, use exact KB line for context
+                    context = exact_line  # debug chosen_id becomes "Pep-Up Plant"
+                    best_score = 1.0  # force select this exact match
         except Exception:
             # Ignore fallback failures
             pass
@@ -110,10 +121,10 @@ class PatchedAgent(BaseAgent):
         if context is not None:
             if semantic_debug:
                 # Debug: show chosen header id and similarity score
-                parts = context.strip().split(" — ")
-                chosen_id = parts[1].strip() if len(parts) >= 2 else None
-                print("\nSemantic retrieval debug: chosen_id=", chosen_id, " score=", best_score)
-                print("Context text:", context)
+                parts = context.strip().split(" — ")  # e.g., "Item — Pep-Up Plant — ..." → ["Item", "Pep-Up Plant", ...]
+                chosen_id = parts[1].strip() if len(parts) >= 2 else None  # Examples: "Pep-Up Plant" | "Piplup" | "Ice Beam"
+                print("\nSemantic retrieval debug: chosen_id=", chosen_id, " score=", best_score)  # Expect score=1.0 when exact-ID fallback is used
+                print("Context text:", context)  # Full KB line for verification, e.g., "Item — Pep-Up Plant — ..."
                 
             if semantic_contextualize_prompt is None:
                 self.add_context("This information may be relevant to the conversation ... " + str(context))
